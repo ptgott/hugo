@@ -760,6 +760,144 @@ Here is the last report for commits in the year 2016. It covers hrev50718-hrev50
 `)
 }
 
+// Issue 8919
+func TestSummaryWithCustomOutputFormat(t *testing.T) {
+	b := newTestSitesBuilder(t)
+	b.WithConfigFile("toml", `baseURL = 'http://example.org/'
+title = 'My New Hugo Site'
+
+timeout = 600000 # ten minutes in case we want to pause and debug
+
+languageCode = "en"
+defaultContentLanguage = "en"
+
+[languages]
+	[languages.en]
+	title = "Repro"
+	languageName = "English"
+	contentDir = "content/en"
+	weight = 1
+
+	[languages.zh_CN]
+	title = "Repro"
+	weight = 2
+	languageName = "简体中文"
+	contentDir = "content/zh_CN"
+
+[outputFormats]
+	[outputFormats.metadata]
+	baseName = "metadata"
+	mediaType = "text/html"
+	isPlainText = true
+	notAlternative = true
+
+[outputs]
+	home = ["HTML", "metadata"]`)
+
+	b.WithTemplates("home.metadata.html", `<h2>Translations</h2>
+<ul>
+{{ range .Site.Menus.main }}
+  {{ $p := .Page }}
+  {{ range $p.Translations}}
+    <li>{{ .Title }}, {{ .Summary }}</li>
+  {{ end }}
+{{ end }}
+</ul>`)
+
+	b.WithTemplates("_default/baseof.html", `<html>
+
+<body>
+	{{ block "main" . }}{{ end }}
+</body>
+
+</html>`)
+
+	b.WithTemplates("_default/home.html", `{{ define "main" }}
+<h2>Translations</h2>
+<ul>
+{{ range .Site.Menus.main }}
+	{{ $p := .Page }}
+	{{ range $p.Translations}}
+	<li>{{ .Title }}, {{ .Summary }}</li>
+	{{ end }}
+{{ end }}
+</ul>
+{{ end }}`)
+
+	b.WithContent("en/_index.md", `---
+title: Title (en)
+summary: Summary (en)
+
+menu:
+  main:
+    weight: 1
+---`)
+
+	b.WithContent("zh_CN/_index.md", `---
+title: Title (zh)
+summary: Summary (zh)
+
+menu:
+  main:
+    weight: 1
+---`)
+
+	b.Build(BuildCfg{})
+
+	b.AssertFileContent("public/index.html", `<html>
+	
+<body>
+	
+<h2>Translations</h2>
+<ul>
+
+	
+	
+	<li>Title (zh), Summary (zh)</li>
+	
+
+</ul>
+
+</body>
+
+</html>`)
+	b.AssertFileContent("public/metadata.html", `<h2>Translations</h2>
+<ul>
+
+	
+	
+	<li>Title (zh), Summary (zh)</li>
+	
+
+</ul>`)
+	b.AssertFileContent("public/zh_cn/index.html", `<html>
+
+<body>
+	
+<h2>Translations</h2>
+<ul>
+
+	
+	
+	<li>Title (en), Summary (en)</li>
+	
+
+</ul>
+
+</body>
+
+</html>`)
+	b.AssertFileContent("public/zh_cn/metadata.html", `<h2>Translations</h2>
+<ul>
+
+	
+	
+	<li>Title (en), Summary (en)</li>
+	
+
+</ul>`)
+}
+
 func TestPageWithDate(t *testing.T) {
 	t.Parallel()
 	cfg, fs := newTestCfg()
