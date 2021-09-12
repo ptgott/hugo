@@ -796,11 +796,9 @@ defaultContentLanguage = "en"
 
 	b.WithTemplates("home.metadata.html", `<h2>Translations</h2>
 <ul>
-{{ range .Site.Menus.main }}
-  {{ $p := .Page }}
-  {{ range $p.Translations}}
-    <li>{{ .Title }}, {{ .Summary }}</li>
-  {{ end }}
+{{ $p := .Page }}
+{{ range $p.Translations}}
+<li>{{ .Title }}, {{ .Summary }}</li>
 {{ end }}
 </ul>`)
 
@@ -815,11 +813,9 @@ defaultContentLanguage = "en"
 	b.WithTemplates("_default/home.html", `{{ define "main" }}
 <h2>Translations</h2>
 <ul>
-{{ range .Site.Menus.main }}
-	{{ $p := .Page }}
-	{{ range $p.Translations}}
-	<li>{{ .Title }}, {{ .Summary }}</li>
-	{{ end }}
+{{ $p := .Page }}
+{{ range $p.Translations}}
+<li>{{ .Title }}, {{ .Summary }}</li>
 {{ end }}
 </ul>
 {{ end }}`)
@@ -828,18 +824,12 @@ defaultContentLanguage = "en"
 title: Title (en)
 summary: Summary (en)
 
-menu:
-  main:
-    weight: 1
 ---`)
 
 	b.WithContent("zh_CN/_index.md", `---
 title: Title (zh)
 summary: Summary (zh)
 
-menu:
-  main:
-    weight: 1
 ---`)
 
 	b.Build(BuildCfg{})
