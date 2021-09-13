@@ -768,7 +768,6 @@ title = 'My New Hugo Site'
 
 timeout = 600000 # ten minutes in case we want to pause and debug
 
-languageCode = "en"
 defaultContentLanguage = "en"
 
 [languages]
@@ -776,11 +775,9 @@ defaultContentLanguage = "en"
 	title = "Repro"
 	languageName = "English"
 	contentDir = "content/en"
-	weight = 1
 
 	[languages.zh_CN]
 	title = "Repro"
-	weight = 2
 	languageName = "简体中文"
 	contentDir = "content/zh_CN"
 
