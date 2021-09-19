@@ -791,7 +791,7 @@ defaultContentLanguage = "en"
 [outputs]
 	home = ["HTML", "metadata"]`)
 
-	b.WithTemplates("home.metadata.html", `<h2>Translations</h2>
+	b.WithTemplates("home.metadata.html", `<h2>Translations metadata</h2>
 <ul>
 {{ $p := .Page }}
 {{ range $p.Translations}}
@@ -848,7 +848,7 @@ summary: Summary (zh)
 </body>
 
 </html>`)
-	b.AssertFileContent("public/metadata.html", `<h2>Translations</h2>
+	b.AssertFileContent("public/metadata.html", `<h2>Translations metadata</h2>
 <ul>
 
 	
