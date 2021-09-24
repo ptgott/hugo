@@ -37,6 +37,7 @@ import (
 	"github.com/gohugoio/hugo/resources/page"
 	"github.com/gohugoio/hugo/resources/resource"
 	"github.com/spf13/afero"
+	"github.com/spf13/jwalterweatherman"
 
 	qt "github.com/frankban/quicktest"
 	"github.com/gohugoio/hugo/deps"
@@ -763,6 +764,7 @@ Here is the last report for commits in the year 2016. It covers hrev50718-hrev50
 // Issue 8919
 func TestSummaryWithCustomOutputFormat(t *testing.T) {
 	b := newTestSitesBuilder(t)
+	b.WithLogger(loggers.NewBasicLoggerForWriter(jwalterweatherman.LevelDebug, os.Stderr))
 	b.WithConfigFile("toml", `baseURL = 'http://example.org/'
 title = 'My New Hugo Site'
 
