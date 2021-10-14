@@ -876,7 +876,7 @@ summary: Summary (zh)
 </body>
 
 </html>`)
-	b.AssertFileContent("public/zh_cn/metadata.html", `<h2>Translations</h2>
+	b.AssertFileContent("public/zh_cn/metadata.html", `<h2>Translations metadata</h2>
 <ul>
 
 	
