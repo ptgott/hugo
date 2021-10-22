@@ -304,9 +304,12 @@ func (h *HugoSites) render(config *BuildCfg) error {
 					// needs this set.
 					s2.rc = &siteRenderingContext{Format: renderFormat}
 
-					if err := s2.preparePagesForRender(s == s2, siteRenderContext.sitesOutIdx); err != nil {
-						return err
-					}
+					s2.pageMap.withEveryBundlePage(func(p *pageState) bool {
+						if err := p.shiftToOutputFormat(s == s2, siteRenderContext.sitesOutIdx); err != nil {
+							return true
+						}
+						return false
+					})
 				}
 
 				if !config.SkipRender {
