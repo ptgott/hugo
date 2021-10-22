@@ -807,17 +807,6 @@ func (h *HugoSites) createPageCollections() error {
 	return nil
 }
 
-func (s *Site) preparePagesForRender(isRenderingSite bool, idx int) error {
-	var err error
-	s.pageMap.withEveryBundlePage(func(p *pageState) bool {
-		if err = p.initOutputFormat(isRenderingSite, idx); err != nil {
-			return true
-		}
-		return false
-	})
-	return nil
-}
-
 // Pages returns all pages for all sites.
 func (h *HugoSites) Pages() page.Pages {
 	return h.Sites[0].AllPages()
