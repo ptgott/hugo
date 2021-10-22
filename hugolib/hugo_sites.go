@@ -810,7 +810,7 @@ func (h *HugoSites) createPageCollections() error {
 func (s *Site) preparePagesForRender(isRenderingSite bool, idx int) error {
 	var err error
 	s.pageMap.withEveryBundlePage(func(p *pageState) bool {
-		if err = p.initOutputFormat(isRenderingSite, idx); err != nil {
+		if err = p.shiftToOutputFormat(isRenderingSite, idx); err != nil {
 			return true
 		}
 		return false

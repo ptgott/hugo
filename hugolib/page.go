@@ -489,15 +489,6 @@ func (p *pageState) resolveTemplate(layouts ...string) (tpl.Template, bool, erro
 	return p.s.Tmpl().LookupLayout(d, f)
 }
 
-// This is serialized
-func (p *pageState) initOutputFormat(isRenderingSite bool, idx int) error {
-	if err := p.shiftToOutputFormat(isRenderingSite, idx); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // Must be run after the site section tree etc. is built and ready.
 func (p *pageState) initPage() error {
 	if _, err := p.init.Do(); err != nil {
