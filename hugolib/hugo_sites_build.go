@@ -312,6 +312,22 @@ func (h *HugoSites) render(config *BuildCfg) error {
 					})
 				}
 
+			}
+
+		}
+	}
+
+	i = 0
+	for _, s := range h.Sites {
+		for siteOutIdx := range s.renderFormats {
+			siteRenderContext.outIdx = siteOutIdx
+			siteRenderContext.sitesOutIdx = i
+			i++
+
+			select {
+			case <-h.Done():
+				return nil
+			default:
 				if !config.SkipRender {
 					if config.PartialReRender {
 						if err := s.renderPages(siteRenderContext); err != nil {
