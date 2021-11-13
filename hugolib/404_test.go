@@ -77,3 +77,50 @@ Page not found
 Base:
 Page not found`)
 }
+
+// Issue 1555
+func Test404WithRelativePaths(t *testing.T) {
+	// TODO: Currently passing. Need to introduce a situation where relative
+	// paths would be different from absolute ones.
+	b := newTestSitesBuilder(t).WithSimpleConfigFileAndSettings(
+		map[string]interface{}{
+			"canonifyurls": false,
+			"relativeURLs": true,
+		},
+	).WithTemplates("404.html", `<menu><ul>
+{{ range .Site.Menus.main }}
+<li>{{.Page.RelPermalink}}</li>
+{{ end }}
+</ul></menu>
+`).WithContent("blog/post1.md",
+		`---
+title: "Post 1"
+menu: "main"
+---
+`,
+		"blog/post2.md",
+		`---
+title: "Post 2"
+menu: "main"
+---
+`,
+		"blog/post3.md",
+		`---
+title: "Post 3"
+menu: "main"
+---
+`)
+
+	b.Build(BuildCfg{})
+
+	b.AssertFileContent("public/404.html", `<menu><ul>
+
+<li>/blog/post1/</li>
+
+<li>/blog/post2/</li>
+
+<li>/blog/post3/</li>
+
+</ul></menu>
+`)
+}
