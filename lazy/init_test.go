@@ -220,3 +220,24 @@ func TestInitBranchOrder(t *testing.T) {
 
 	c.Assert(state.V2, qt.Equals, "ABAB")
 }
+
+// Sometimes need to call the same *Init's Do method multiple times, e.g., when
+// hugo server is running. In these cases, we need to make sure that an error
+// returned by an earlier call does not persist in memory for later calls.
+// See issue 7043
+func TestAvoidRepeatDoError(t *testing.T) {
+	r := false
+	i := New().Add(func() (interface{}, error) {
+		if r {
+			return nil, nil
+		}
+		return nil, errors.New("r is false")
+	})
+	i.Do()
+	r = true
+	i.Do()
+	if i.err != nil {
+		t.Errorf("expected a nil error but got: %v", i.err)
+	}
+
+}

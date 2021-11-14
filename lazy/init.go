@@ -76,6 +76,10 @@ func (ini *Init) Do() (interface{}, error) {
 		panic("init is nil")
 	}
 
+	// Reset the error in case we have already called Do, e.g., when hugo
+	// server is running.
+	ini.err = nil
+
 	ini.init.Do(func() {
 		prev := ini.prev
 		if prev != nil {

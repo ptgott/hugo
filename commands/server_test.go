@@ -17,6 +17,8 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"testing"
@@ -24,6 +26,8 @@ import (
 
 	"github.com/gohugoio/hugo/config"
 	"github.com/gohugoio/hugo/helpers"
+	"github.com/gohugoio/hugo/htesting"
+	"github.com/gohugoio/hugo/hugofs"
 
 	qt "github.com/frankban/quicktest"
 )
@@ -130,4 +134,101 @@ ERROR 2018/10/07 13:11:12 Rebuild failed: logged 1 error(s)
 
 func isWindowsCI() bool {
 	return runtime.GOOS == "windows" && os.Getenv("CI") != ""
+}
+
+// Issue 7043
+func TestServerReloadWithBadData(t *testing.T) {
+	c := qt.New(t)
+	dir, clean, err := htesting.CreateTempDir(hugofs.Os, "hugo-cli")
+
+	cfgStr := `
+
+baseURL = "https://example.org"
+title = "Hugo Commands"
+
+`
+	os.MkdirAll(filepath.Join(dir, "public"), 0777)
+	os.MkdirAll(filepath.Join(dir, "data"), 0777)
+	os.MkdirAll(filepath.Join(dir, "layouts"), 0777)
+
+	writeFile(t, filepath.Join(dir, "config.toml"), cfgStr)
+	writeFile(t, filepath.Join(dir, "content", "p1.md"), `
+---
+title: "P1"
+weight: 1
+---
+
+Content
+
+`)
+	defer clean()
+	c.Assert(err, qt.IsNil)
+
+	// The first time we write to the data file, the JSON is valid.
+	writeFile(t, path.Join(dir, "data", "testdata.json"), `{
+"key1": "value1",
+"key2": "value2"
+}`)
+
+	writeFile(t, path.Join(dir, "layouts", "index.html"), `{{- range $k, $v := .Site.Data.testdata -}}
+<p>{{$k}} has the value {{$v}}</p>
+{{ end }}`)
+
+	port := 1331
+
+	b := newCommandsBuilder()
+	stop := make(chan bool)
+	scmd := b.newServerCmdSignaled(stop)
+
+	defer func() {
+		// Stop the server.
+		stop <- true
+	}()
+
+	cmd := scmd.getCommand()
+	cmd.SetArgs([]string{
+		"-s=" + dir,
+		fmt.Sprintf("-p=%d", port),
+		"-d=" + path.Join(dir, "public"),
+	})
+
+	go func() {
+		_, err = cmd.ExecuteC()
+		c.Assert(err, qt.IsNil)
+	}()
+
+	// There is no way to know exactly when the server is ready for connections.
+	// We could improve by something like https://golang.org/pkg/net/http/httptest/#Server
+	// But for now, let us sleep and pray!
+	time.Sleep(1 * time.Second)
+
+	// Break the JSON by removing the comma
+	writeFile(t, path.Join(dir, "data", "testdata.json"), `{
+"key1": "value1"
+"key2": "value2"
+}`)
+
+	// Wait for the server to make the change
+	time.Sleep(1 * time.Second)
+
+	// Fix the JSON and add a line
+	writeFile(t, path.Join(dir, "data", "testdata.json"), `{
+"key1": "value1",
+"key2": "value2",
+"key3": "value3"
+}`)
+
+	// Wait for the server to make the change
+	time.Sleep(1 * time.Second)
+
+	exp := `<p>key1 has the value value1</p>
+<p>key2 has the value value2</p>
+<p>key3 has the value value3</p>
+`
+
+	af, err := os.ReadFile(path.Join(dir, "public", "index.html"))
+	c.Assert(err, qt.IsNil)
+	c.Assert(string(af), qt.Equals, exp)
+
+	return
 }
