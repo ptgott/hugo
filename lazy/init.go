@@ -35,7 +35,6 @@ type Init struct {
 
 	init onceMore
 	out  interface{}
-	err  error
 	f    func() (interface{}, error)
 }
 
@@ -76,18 +75,15 @@ func (ini *Init) Do() (interface{}, error) {
 		panic("init is nil")
 	}
 
-	// Reset the error in case we have already called Do, e.g., when hugo
-	// server is running.
-	ini.err = nil
+	var err error
 
 	ini.init.Do(func() {
 		prev := ini.prev
 		if prev != nil {
 			// A branch. Initialize the ancestors.
 			if prev.shouldInitialize() {
-				_, err := prev.Do()
+				_, err = prev.Do()
 				if err != nil {
-					ini.err = err
 					return
 				}
 			} else if prev.inProgress() {
@@ -98,14 +94,13 @@ func (ini *Init) Do() (interface{}, error) {
 		}
 
 		if ini.f != nil {
-			ini.out, ini.err = ini.f()
+			ini.out, err = ini.f()
 		}
 
 		for _, child := range ini.children {
 			if child.shouldInitialize() {
-				_, err := child.Do()
+				_, err = child.Do()
 				if err != nil {
-					ini.err = err
 					return
 				}
 			}
@@ -114,7 +109,7 @@ func (ini *Init) Do() (interface{}, error) {
 
 	ini.wait()
 
-	return ini.out, ini.err
+	return ini.out, err
 }
 
 // TODO(bep) investigate if we can use sync.Cond for this.

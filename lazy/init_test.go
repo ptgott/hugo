@@ -233,11 +233,11 @@ func TestAvoidRepeatDoError(t *testing.T) {
 		}
 		return nil, errors.New("r is false")
 	})
-	i.Do()
+	_, err := i.Do()
 	r = true
-	i.Do()
-	if i.err != nil {
-		t.Errorf("expected a nil error but got: %v", i.err)
+	_, err = i.Do()
+	if err != nil {
+		t.Errorf("expected a nil error but got: %v", err)
 	}
 
 }
