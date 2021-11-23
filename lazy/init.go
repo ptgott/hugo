@@ -75,16 +75,15 @@ func (ini *Init) Do() (interface{}, error) {
 		panic("init is nil")
 	}
 
-	var err error
-
-	ini.init.Do(func() {
+	err := ini.init.Do(func() error {
+		var err error
 		prev := ini.prev
 		if prev != nil {
 			// A branch. Initialize the ancestors.
 			if prev.shouldInitialize() {
 				_, err = prev.Do()
 				if err != nil {
-					return
+					return err
 				}
 			} else if prev.inProgress() {
 				// Concurrent initialization. The following init func
@@ -99,12 +98,13 @@ func (ini *Init) Do() (interface{}, error) {
 
 		for _, child := range ini.children {
 			if child.shouldInitialize() {
-				_, err = child.Do()
+				_, err := child.Do()
 				if err != nil {
-					return
+					return err
 				}
 			}
 		}
+		return err
 	})
 
 	ini.wait()
