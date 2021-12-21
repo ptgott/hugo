@@ -305,58 +305,54 @@ func (h *HugoSites) render(config *BuildCfg) error {
 					s2.rc = &siteRenderingContext{Format: renderFormat}
 
 					s2.pageMap.withEveryBundlePage(func(p *pageState) bool {
-						if err := (func(p *pageState, isRenderingSite bool, idx int) error {
-							if err := p.initPage(); err != nil {
-								return err
-							}
-
-							if len(p.pageOutputs) == 1 {
-								idx = 0
-							}
-
-							p.pageOutput = p.pageOutputs[idx]
-							if p.pageOutput == nil {
-								panic(fmt.Sprintf("pageOutput is nil for output idx %d", idx))
-							}
-
-							// Reset any built paginator. This will trigger when re-rendering pages in
-							// server mode.
-							if isRenderingSite && p.pageOutput.paginator != nil && p.pageOutput.paginator.current != nil {
-								p.pageOutput.paginator.reset()
-							}
-
-							if isRenderingSite {
-								cp := p.pageOutput.cp
-								if cp == nil {
-									// Look for content to reuse.
-									for i := 0; i < len(p.pageOutputs); i++ {
-										if i == idx {
-											continue
-										}
-										po := p.pageOutputs[i]
-
-										if po.cp != nil && po.cp.reuse {
-											cp = po.cp
-											break
-										}
-									}
-								}
-
-								if cp == nil {
-									var err error
-									cp, err = newPageContentOutput(p, p.pageOutput)
-									if err != nil {
-										return err
-									}
-								}
-								p.pageOutput.initContentProvider(cp)
-								p.pageOutput.cp = cp
-							}
-
-							return nil
-						})(p, s == s2, siteRenderContext.sitesOutIdx); err != nil {
+						// (p, s == s2, siteRenderContext.sitesOutIdx)
+						if err := p.initPage(); err != nil {
 							return true
 						}
+
+						if len(p.pageOutputs) == 1 {
+							siteRenderContext.sitesOutIdx = 0
+						}
+
+						p.pageOutput = p.pageOutputs[siteRenderContext.sitesOutIdx]
+						if p.pageOutput == nil {
+							panic(fmt.Sprintf("pageOutput is nil for output idx %d", siteRenderContext.sitesOutIdx))
+						}
+
+						// Reset any built paginator. This will trigger when re-rendering pages in
+						// server mode.
+						if s == s2 && p.pageOutput.paginator != nil && p.pageOutput.paginator.current != nil {
+							p.pageOutput.paginator.reset()
+						}
+
+						if s == s2 {
+							cp := p.pageOutput.cp
+							if cp == nil {
+								// Look for content to reuse.
+								for i := 0; i < len(p.pageOutputs); i++ {
+									if i == siteRenderContext.sitesOutIdx {
+										continue
+									}
+									po := p.pageOutputs[i]
+
+									if po.cp != nil && po.cp.reuse {
+										cp = po.cp
+										break
+									}
+								}
+							}
+
+							if cp == nil {
+								var err error
+								cp, err = newPageContentOutput(p, p.pageOutput)
+								if err != nil {
+									return true
+								}
+							}
+							p.pageOutput.initContentProvider(cp)
+							p.pageOutput.cp = cp
+						}
+
 						return false
 					})
 				}
