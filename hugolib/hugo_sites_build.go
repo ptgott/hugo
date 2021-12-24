@@ -305,7 +305,6 @@ func (h *HugoSites) render(config *BuildCfg) error {
 					s2.rc = &siteRenderingContext{Format: renderFormat}
 
 					s2.pageMap.withEveryBundlePage(func(p *pageState) bool {
-						// (p, s == s2, siteRenderContext.sitesOutIdx)
 						if err := p.initPage(); err != nil {
 							return true
 						}
