@@ -287,12 +287,9 @@ func (h *HugoSites) render(config *BuildCfg) error {
 		}
 	}
 
-	i := 0
 	for _, s := range h.Sites {
 		for siteOutIdx, renderFormat := range s.renderFormats {
 			siteRenderContext.outIdx = siteOutIdx
-			siteRenderContext.sitesOutIdx = i
-			i++
 
 			select {
 			case <-h.Done():
@@ -310,12 +307,13 @@ func (h *HugoSites) render(config *BuildCfg) error {
 						}
 
 						if len(p.pageOutputs) == 1 {
-							siteRenderContext.sitesOutIdx = 0
+							p.pageOutput = p.pageOutputs[0]
+						} else {
+							p.pageOutput = p.pageOutputs[siteOutIdx]
 						}
 
-						p.pageOutput = p.pageOutputs[siteRenderContext.sitesOutIdx]
 						if p.pageOutput == nil {
-							panic(fmt.Sprintf("pageOutput is nil for output idx %d", siteRenderContext.sitesOutIdx))
+							panic("pageOutput is nil")
 						}
 
 						// Reset any built paginator. This will trigger when re-rendering pages in
@@ -328,11 +326,12 @@ func (h *HugoSites) render(config *BuildCfg) error {
 							cp := p.pageOutput.cp
 							if cp == nil {
 								// Look for content to reuse.
-								for i := 0; i < len(p.pageOutputs); i++ {
-									if i == siteRenderContext.sitesOutIdx {
+								for _, po := range p.pageOutputs {
+									// Same content as what is currently
+									// selected, so ignore.
+									if po == p.pageOutput {
 										continue
 									}
-									po := p.pageOutputs[i]
 
 									if po.cp != nil && po.cp.reuse {
 										cp = po.cp

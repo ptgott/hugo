@@ -1250,9 +1250,9 @@ func (s *Site) render(ctx *siteRenderContext) (err error) {
 		}
 	}
 
-	if !ctx.renderSingletonPages() {
-		return
-	}
+	// if !ctx.renderSingletonPages() {
+	// 	return
+	// }
 
 	if err = s.renderMainLanguageRedirect(); err != nil {
 		return

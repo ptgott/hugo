@@ -33,9 +33,6 @@ import (
 type siteRenderContext struct {
 	cfg *BuildCfg
 
-	// Zero based index for all output formats combined.
-	sitesOutIdx int
-
 	// Zero based index of the output formats configured within a Site.
 	// Note that these outputs are sorted.
 	outIdx int
@@ -44,16 +41,16 @@ type siteRenderContext struct {
 }
 
 // Whether to render 404.html, robotsTXT.txt which usually is rendered
-// once only in the site root.
-func (s siteRenderContext) renderSingletonPages() bool {
-	if s.multihost {
-		// 1 per site
-		return s.outIdx == 0
-	}
+// // once only in the site root.
+// func (s siteRenderContext) renderSingletonPages() bool {
+// 	if s.multihost {
+// 		// 1 per site
+// 		return s.outIdx == 0
+// 	}
 
-	// 1 for all sites
-	return s.sitesOutIdx == 0
-}
+// 	// 1 for all sites
+// 	return s.sitesOutIdx == 0
+// }
 
 // renderPages renders pages each corresponding to a markdown file.
 // TODO(bep np doc
