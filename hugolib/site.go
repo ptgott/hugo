@@ -203,6 +203,11 @@ type siteInit struct {
 	prevNextInSection *lazy.Init
 	menus             *lazy.Init
 	taxonomies        *lazy.Init
+	// Pages defined once per site that do not depend on content files,
+	// such as robots.txt, the 404 page, site map, and main page
+	// redirect
+	oneOffPages *lazy.Init
+	aliases     *lazy.Init
 }
 
 func (init *siteInit) Reset() {
@@ -210,6 +215,8 @@ func (init *siteInit) Reset() {
 	init.prevNextInSection.Reset()
 	init.menus.Reset()
 	init.taxonomies.Reset()
+	init.oneOffPages.Reset()
+	init.aliases.Reset()
 }
 
 func (s *Site) initInit(init *lazy.Init, pctx pageContext) bool {
@@ -317,6 +324,35 @@ func (s *Site) prepareInits() {
 	s.init.taxonomies = init.Branch(func() (interface{}, error) {
 		err := s.pageMap.assembleTaxonomies()
 		return nil, err
+	})
+
+	s.init.oneOffPages = init.Branch(func() (interface{}, error) {
+		if err := s.renderSitemap(); err != nil {
+			return nil, err
+		}
+
+		if s.h.Deps.Cfg.GetBool("multihost") {
+			if err := s.renderRobotsTXT(); err != nil {
+				return nil, err
+			}
+		}
+
+		if err := s.render404(); err != nil {
+			return nil, err
+		}
+
+		if err := s.renderMainLanguageRedirect(); err != nil {
+			return nil, err
+		}
+
+		return nil, nil
+	})
+
+	s.init.aliases = init.Branch(func() (interface{}, error) {
+		if err := s.renderAliases(); err != nil {
+			return nil, err
+		}
+		return nil, nil
 	})
 }
 
@@ -1215,18 +1251,16 @@ func (s *Site) render(ctx *siteRenderContext) (err error) {
 		return err
 	}
 
-	if ctx.outIdx == 0 {
-		// Note that even if disableAliases is set, the aliases themselves are
-		// preserved on page. The motivation with this is to be able to generate
-		// 301 redirects in a .htacess file and similar using a custom output format.
-		if !s.Cfg.GetBool("disableAliases") {
-			// Aliases must be rendered before pages.
-			// Some sites, Hugo docs included, have faulty alias definitions that point
-			// to itself or another real page. These will be overwritten in the next
-			// step.
-			if err = s.renderAliases(); err != nil {
-				return
-			}
+	// Note that even if disableAliases is set, the aliases themselves are
+	// preserved on page. The motivation with this is to be able to generate
+	// 301 redirects in a .htacess file and similar using a custom output format.
+	if !s.Cfg.GetBool("disableAliases") {
+		// Aliases must be rendered before pages.
+		// Some sites, Hugo docs included, have faulty alias definitions that point
+		// to itself or another real page. These will be overwritten in the next
+		// step.
+		if _, err = s.init.aliases.Do(); err != nil {
+			return
 		}
 	}
 
@@ -1234,27 +1268,7 @@ func (s *Site) render(ctx *siteRenderContext) (err error) {
 		return
 	}
 
-	if ctx.outIdx == 0 {
-		if err = s.renderSitemap(); err != nil {
-			return
-		}
-
-		if ctx.multihost {
-			if err = s.renderRobotsTXT(); err != nil {
-				return
-			}
-		}
-
-		if err = s.render404(); err != nil {
-			return
-		}
-	}
-
-	// if !ctx.renderSingletonPages() {
-	// 	return
-	// }
-
-	if err = s.renderMainLanguageRedirect(); err != nil {
+	if _, err = s.init.oneOffPages.Do(); err != nil {
 		return
 	}
 

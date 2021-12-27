@@ -32,12 +32,6 @@ import (
 
 type siteRenderContext struct {
 	cfg *BuildCfg
-
-	// Zero based index of the output formats configured within a Site.
-	// Note that these outputs are sorted.
-	outIdx int
-
-	multihost bool
 }
 
 // Whether to render 404.html, robotsTXT.txt which usually is rendered

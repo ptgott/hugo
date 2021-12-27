@@ -641,7 +641,6 @@ func (h *HugoSites) createSitesFromConfig(cfg config.Provider) error {
 	h.Deps = sites[0].Deps
 
 	h.multilingual = langConfig
-	h.multihost = h.Deps.Cfg.GetBool("multihost")
 
 	return nil
 }

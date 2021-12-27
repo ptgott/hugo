@@ -273,7 +273,7 @@ func (h *HugoSites) render(config *BuildCfg) error {
 		return err
 	}
 
-	siteRenderContext := &siteRenderContext{cfg: config, multihost: h.multihost}
+	siteRenderContext := &siteRenderContext{cfg: config}
 
 	if !config.PartialReRender {
 		h.renderFormats = output.Formats{}
@@ -289,7 +289,6 @@ func (h *HugoSites) render(config *BuildCfg) error {
 
 	for _, s := range h.Sites {
 		for siteOutIdx, renderFormat := range s.renderFormats {
-			siteRenderContext.outIdx = siteOutIdx
 
 			select {
 			case <-h.Done():
