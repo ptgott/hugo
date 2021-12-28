@@ -122,7 +122,8 @@ type pageState struct {
 	// formats (for all sites).
 	pageOutputs []*pageOutput
 
-	// This will be shifted out when we start to render a new output format.
+	// We render each site for all the relevant output formats in series, and
+	// this is the format currently being rendered for this page.
 	*pageOutput
 
 	// Common for all output formats.

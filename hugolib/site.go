@@ -136,10 +136,6 @@ type Site struct {
 	// How to handle page front matter.
 	frontmatterHandler pagemeta.FrontMatterHandler
 
-	// We render each site for all the relevant output formats in series, and
-	// this is the format currently being rendered.
-	currentOutputFormat *output.Format
-
 	// The output formats that we need to render this site in. This slice
 	// will be fixed once set.
 	// This will be the union of Site.Pages' outputFormats.
@@ -410,7 +406,6 @@ func (s *Site) reset() *Site {
 		relatedDocsHandler:  s.relatedDocsHandler.Clone(),
 		siteRefLinker:       s.siteRefLinker,
 		outputFormats:       s.outputFormats,
-		currentOutputFormat: s.currentOutputFormat,
 		outputFormatsConfig: s.outputFormatsConfig,
 		frontmatterHandler:  s.frontmatterHandler,
 		mediaTypesConfig:    s.mediaTypesConfig,
@@ -592,8 +587,6 @@ But this also means that your site configuration may not do what you expect. If 
 		siteCfg: siteConfig,
 
 		titleFunc: titleFunc,
-
-		currentOutputFormat: &output.HTMLFormat,
 
 		frontmatterHandler: frontMatterHandler,
 		relatedDocsHandler: page.NewRelatedDocsHandler(relatedContentConfig),

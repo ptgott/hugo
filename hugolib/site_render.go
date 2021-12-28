@@ -158,19 +158,18 @@ func (s *Site) renderPaginator(p *pageState, templ tpl.Template) error {
 	paginatePath := s.Cfg.GetString("paginatePath")
 
 	d := p.targetPathDescriptor
-	f := *p.s.currentOutputFormat
-	d.Type = f
+	d.Type = p.pageOutput.f
 
 	if p.paginator.current == nil || p.paginator.current != p.paginator.current.First() {
 		panic(fmt.Sprintf("invalid paginator state for %q", p.pathOrTitle()))
 	}
 
-	if f.IsHTML {
+	if d.Type.IsHTML {
 		// Write alias for page 1
 		d.Addends = fmt.Sprintf("/%s/%d", paginatePath, 1)
 		targetPaths := page.CreateTargetPaths(d)
 
-		if err := s.writeDestAlias(targetPaths.TargetFilename, p.Permalink(), f, nil); err != nil {
+		if err := s.writeDestAlias(targetPaths.TargetFilename, p.Permalink(), d.Type, nil); err != nil {
 			return err
 		}
 	}

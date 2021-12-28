@@ -286,24 +286,22 @@ func (h *HugoSites) render(config *BuildCfg) error {
 	}
 
 	for _, s := range h.Sites {
-		for siteOutIdx, renderFormat := range s.renderFormats {
+		for siteOutIdx := range s.renderFormats {
 
 			select {
 			case <-h.Done():
 				return nil
 			default:
 				for _, s2 := range h.Sites {
-					// We render site by site, but since the content is lazily rendered
-					// and a site can "borrow" content from other sites, every site
-					// needs this set.
-					s2.currentOutputFormat = &renderFormat
-
 					s2.pageMap.withEveryBundlePage(func(p *pageState) bool {
 						if err := p.initPage(); err != nil {
 							return true
 						}
 
 						if len(p.pageOutputs) == 1 {
+							// We render site by site, but since the content is lazily rendered
+							// and a site can "borrow" content from other sites, every page
+							// needs this set.
 							p.pageOutput = p.pageOutputs[0]
 						} else {
 							p.pageOutput = p.pageOutputs[siteOutIdx]
