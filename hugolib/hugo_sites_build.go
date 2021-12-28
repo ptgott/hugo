@@ -296,7 +296,7 @@ func (h *HugoSites) render(config *BuildCfg) error {
 					// We render site by site, but since the content is lazily rendered
 					// and a site can "borrow" content from other sites, every site
 					// needs this set.
-					s2.rc = &siteRenderingContext{Format: renderFormat}
+					s2.currentOutputFormat = &renderFormat
 
 					s2.pageMap.withEveryBundlePage(func(p *pageState) bool {
 						if err := p.initPage(); err != nil {

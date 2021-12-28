@@ -158,7 +158,7 @@ func (s *Site) renderPaginator(p *pageState, templ tpl.Template) error {
 	paginatePath := s.Cfg.GetString("paginatePath")
 
 	d := p.targetPathDescriptor
-	f := p.s.rc.Format
+	f := *p.s.currentOutputFormat
 	d.Type = f
 
 	if p.paginator.current == nil || p.paginator.current != p.paginator.current.First() {
