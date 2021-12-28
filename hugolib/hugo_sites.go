@@ -392,7 +392,7 @@ func newHugoSites(cfg deps.DepsCfg, sites ...*Site) (*HugoSites, error) {
 			// Find the site that corresponds to the main lang
 			var s *Site
 			for _, ss := range h.Sites {
-				if ss.Language() == mainLang {
+				if ss.Language().Lang == mainLang.Lang {
 					s = ss
 				}
 			}
