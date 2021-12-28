@@ -273,8 +273,6 @@ func (h *HugoSites) render(config *BuildCfg) error {
 		return err
 	}
 
-	siteRenderContext := &siteRenderContext{cfg: config}
-
 	if !config.PartialReRender {
 		h.renderFormats = output.Formats{}
 		h.withSite(func(s *Site) error {
@@ -356,11 +354,11 @@ func (h *HugoSites) render(config *BuildCfg) error {
 
 				if !config.SkipRender {
 					if config.PartialReRender {
-						if err := s.renderPages(siteRenderContext); err != nil {
+						if err := s.renderPages(config); err != nil {
 							return err
 						}
 					} else {
-						if err := s.render(siteRenderContext); err != nil {
+						if err := s.render(config); err != nil {
 							return err
 						}
 					}

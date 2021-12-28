@@ -30,13 +30,9 @@ import (
 	"github.com/gohugoio/hugo/resources/page/pagemeta"
 )
 
-type siteRenderContext struct {
-	cfg *BuildCfg
-}
-
 // renderPages renders pages each corresponding to a markdown file.
 // TODO(bep np doc
-func (s *Site) renderPages(ctx *siteRenderContext) error {
+func (s *Site) renderPages(cfg *BuildCfg) error {
 	numWorkers := config.GetNumWorkerMultiplier()
 
 	results := make(chan error)
@@ -49,10 +45,8 @@ func (s *Site) renderPages(ctx *siteRenderContext) error {
 
 	for i := 0; i < numWorkers; i++ {
 		wg.Add(1)
-		go pageRenderer(ctx, s, pages, results, wg)
+		go pageRenderer(cfg, s, pages, results, wg)
 	}
-
-	cfg := ctx.cfg
 
 	s.pageMap.pageTrees.Walk(func(ss string, n *contentNode) bool {
 		if cfg.shouldRender(n.p) {
@@ -80,7 +74,7 @@ func (s *Site) renderPages(ctx *siteRenderContext) error {
 }
 
 func pageRenderer(
-	ctx *siteRenderContext,
+	cfg *BuildCfg,
 	s *Site,
 	pages <-chan *pageState,
 	results chan<- error,

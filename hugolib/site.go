@@ -1242,7 +1242,7 @@ func (s *Site) process(config BuildCfg) (err error) {
 	return err
 }
 
-func (s *Site) render(ctx *siteRenderContext) (err error) {
+func (s *Site) render(cfg *BuildCfg) (err error) {
 	if err := page.Clear(); err != nil {
 		return err
 	}
@@ -1260,7 +1260,7 @@ func (s *Site) render(ctx *siteRenderContext) (err error) {
 		}
 	}
 
-	if err = s.renderPages(ctx); err != nil {
+	if err = s.renderPages(cfg); err != nil {
 		return
 	}
 
