@@ -171,6 +171,10 @@ type hugoSitesInit struct {
 
 	// Maps page translations.
 	translations *lazy.Init
+
+	// In Hugo environments with multiple per-language sites, redirect
+	// the main page to the default site.
+	mainLanguageRedirect *lazy.Init
 }
 
 func (h *hugoSitesInit) Reset() {
@@ -178,6 +182,7 @@ func (h *hugoSitesInit) Reset() {
 	h.layouts.Reset()
 	h.gitInfo.Reset()
 	h.translations.Reset()
+	h.mainLanguageRedirect.Reset()
 }
 
 func (h *HugoSites) Data() map[string]interface{} {
@@ -326,10 +331,11 @@ func newHugoSites(cfg deps.DepsCfg, sites ...*Site) (*HugoSites, error) {
 		numWorkers:              numWorkers,
 		skipRebuildForFilenames: make(map[string]bool),
 		init: &hugoSitesInit{
-			data:         lazy.New(),
-			layouts:      lazy.New(),
-			gitInfo:      lazy.New(),
-			translations: lazy.New(),
+			data:                 lazy.New(),
+			layouts:              lazy.New(),
+			gitInfo:              lazy.New(),
+			translations:         lazy.New(),
+			mainLanguageRedirect: lazy.New(),
 		},
 	}
 
@@ -369,6 +375,47 @@ func newHugoSites(cfg deps.DepsCfg, sites ...*Site) (*HugoSites, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to load Git info")
 		}
+		return nil, nil
+	})
+
+	// create a redirect to the main language home, depending on if it lives
+	// in sub folder (e.g. /en) or not.
+	h.init.mainLanguageRedirect.Add(func() (interface{}, error) {
+		if !h.multilingual.enabled() || h.IsMultihost() {
+			// No need for a redirect
+			return nil, nil
+		}
+
+		html, found := h.OutputFormatsConfig.GetByName("HTML")
+		if found {
+			mainLang := h.multilingual.DefaultLang
+			// Find the site that corresponds to the main lang
+			var s *Site
+			for _, ss := range h.Sites {
+				if ss.Language() == mainLang {
+					s = ss
+				}
+			}
+			// No site with the main language, so no need for a main
+			// language redirect
+			if s == nil {
+				return nil, nil
+			}
+			if s.Info.defaultContentLanguageInSubdir {
+				mainLangURL := s.PathSpec.AbsURL(mainLang.Lang+"/", false)
+				s.Log.Debugf("Write redirect to main language %s: %s", mainLang, mainLangURL)
+				if err := s.publishDestAlias(true, "/", mainLangURL, html, nil); err != nil {
+					return nil, err
+				}
+			} else {
+				mainLangURL := s.PathSpec.AbsURL("", false)
+				s.Log.Debugf("Write redirect to main language %s: %s", mainLang, mainLangURL)
+				if err := s.publishDestAlias(true, mainLang.Lang, mainLangURL, html, nil); err != nil {
+					return nil, err
+				}
+			}
+		}
+
 		return nil, nil
 	})
 

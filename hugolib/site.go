@@ -341,10 +341,6 @@ func (s *Site) prepareInits() {
 			return nil, err
 		}
 
-		if err := s.renderMainLanguageRedirect(); err != nil {
-			return nil, err
-		}
-
 		return nil, nil
 	})
 
@@ -1269,6 +1265,10 @@ func (s *Site) render(ctx *siteRenderContext) (err error) {
 	}
 
 	if _, err = s.init.oneOffPages.Do(); err != nil {
+		return
+	}
+
+	if _, err = s.h.init.mainLanguageRedirect.Do(); err != nil {
 		return
 	}
 

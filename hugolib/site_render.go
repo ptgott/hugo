@@ -354,32 +354,3 @@ func (s *Site) renderAliases() error {
 
 	return err
 }
-
-// renderMainLanguageRedirect creates a redirect to the main language home,
-// depending on if it lives in sub folder (e.g. /en) or not.
-func (s *Site) renderMainLanguageRedirect() error {
-	if !s.h.multilingual.enabled() || s.h.IsMultihost() {
-		// No need for a redirect
-		return nil
-	}
-
-	html, found := s.outputFormatsConfig.GetByName("HTML")
-	if found {
-		mainLang := s.h.multilingual.DefaultLang
-		if s.Info.defaultContentLanguageInSubdir {
-			mainLangURL := s.PathSpec.AbsURL(mainLang.Lang+"/", false)
-			s.Log.Debugf("Write redirect to main language %s: %s", mainLang, mainLangURL)
-			if err := s.publishDestAlias(true, "/", mainLangURL, html, nil); err != nil {
-				return err
-			}
-		} else {
-			mainLangURL := s.PathSpec.AbsURL("", false)
-			s.Log.Debugf("Write redirect to main language %s: %s", mainLang, mainLangURL)
-			if err := s.publishDestAlias(true, mainLang.Lang, mainLangURL, html, nil); err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
-}
