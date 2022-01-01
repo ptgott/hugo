@@ -120,7 +120,7 @@ func (pa pageSiteAdapter) GetPage(ref string) (page.Page, error) {
 type pageState struct {
 	// This slice will be of same length as the number of global slice of output
 	// formats (for all sites).
-	pageOutputs []*pageOutput
+	pageOutputs map[output.Format]*pageOutput
 
 	// We render each site for all the relevant output formats in series, and
 	// this is the format currently being rendered for this page.

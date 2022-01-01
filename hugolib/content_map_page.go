@@ -22,6 +22,7 @@ import (
 	"sync"
 
 	"github.com/gohugoio/hugo/common/maps"
+	"github.com/gohugoio/hugo/output"
 
 	"github.com/gohugoio/hugo/common/types"
 	"github.com/gohugoio/hugo/resources"
@@ -180,13 +181,13 @@ func (m *pageMap) newPageFromContentNode(n *contentNode, parentBucket *pagesMapB
 		// We do this even if this page does not get rendered on
 		// its own. It may be referenced via .Site.GetPage and
 		// it will then need an output format.
-		ps.pageOutputs = make([]*pageOutput, len(ps.s.h.renderFormats))
+		ps.pageOutputs = make(map[output.Format]*pageOutput, len(ps.s.h.renderFormats))
 		created := make(map[string]*pageOutput)
 		shouldRenderPage := !ps.m.noRender()
 
 		for i, f := range ps.s.h.renderFormats {
 			if po, found := created[f.Name]; found {
-				ps.pageOutputs[i] = po
+				ps.pageOutputs[f] = po
 				continue
 			}
 
@@ -207,7 +208,7 @@ func (m *pageMap) newPageFromContentNode(n *contentNode, parentBucket *pagesMapB
 				po.initContentProvider(contentProvider)
 			}
 
-			ps.pageOutputs[i] = po
+			ps.pageOutputs[f] = po
 			created[f.Name] = po
 
 		}

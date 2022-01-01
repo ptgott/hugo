@@ -147,9 +147,9 @@ func newPageFromMeta(
 			// We do this even if this page does not get rendered on
 			// its own. It may be referenced via .Site.GetPage and
 			// it will then need an output format.
-			ps.pageOutputs = make([]*pageOutput, len(ps.s.h.renderFormats))
+			ps.pageOutputs = make(map[output.Format]*pageOutput, len(ps.s.h.renderFormats))
 			created := make(map[string]*pageOutput)
-			for i, f := range ps.s.h.renderFormats {
+			for _, f := range ps.s.h.renderFormats {
 				po, found := created[f.Name]
 				if !found {
 					render := shouldRenderPage
@@ -159,7 +159,7 @@ func newPageFromMeta(
 					po = makeOut(f, render)
 					created[f.Name] = po
 				}
-				ps.pageOutputs[i] = po
+				ps.pageOutputs[f] = po
 			}
 		}
 
