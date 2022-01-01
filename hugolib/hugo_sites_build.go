@@ -309,13 +309,18 @@ func (h *HugoSites) render(config *BuildCfg) error {
 						}
 						p.pageOutput = pt
 
-						// Reset any built paginator. This will trigger when re-rendering pages in
-						// server mode.
-						if s == s2 && p.pageOutput.paginator != nil && p.pageOutput.paginator.current != nil {
-							p.pageOutput.paginator.reset()
-						}
-
+						// This is the site that we will render next, so
+						// prepare the page to be rendered.
 						if s == s2 {
+
+							// Reset any built paginator. This will trigger when re-rendering pages in
+							// server mode.
+							if p.pageOutput.paginator != nil && p.pageOutput.paginator.current != nil {
+								p.pageOutput.paginator.reset()
+							}
+
+							// Assign a content provider to the pageOutput,
+							// preferring one that we have assigned already.
 							cp := p.pageOutput.cp
 							if cp == nil {
 								// Look for content to reuse.
