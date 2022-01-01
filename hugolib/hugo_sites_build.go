@@ -285,6 +285,10 @@ func (h *HugoSites) render(config *BuildCfg) error {
 		}
 	}
 
+	// Render each site. Before rendering, we check other sites for content we
+	// can reuse. We do this by checking each render format for each site and
+	// seeing if that render format has a corresponding pageOutput in
+	// another site.
 	for _, s := range h.Sites {
 		for _, rf := range s.renderFormats {
 			select {
@@ -297,9 +301,8 @@ func (h *HugoSites) render(config *BuildCfg) error {
 							return true
 						}
 
-						// We render site by site, but since the content is lazily rendered
-						// and a site can "borrow" content from other sites, every page
-						// needs this set.
+						// Find a pageOutput that corresponds with the render
+						// format we assign to the page.
 						pt, ok := p.pageOutputs[rf]
 						if !ok || pt == nil {
 							panic("pageOutput is nil")
