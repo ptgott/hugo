@@ -285,10 +285,9 @@ func (h *HugoSites) render(config *BuildCfg) error {
 		}
 	}
 
-	// Render each site. Before rendering, we check other sites for content we
-	// can reuse. We do this by checking each render format for each site and
-	// seeing if that render format has a corresponding pageOutput in
-	// another site.
+	// Render each site. For each site, check all of the render formats for
+	// all of the other sites and see if we can reuse content. Otherwise,
+	// prepare pages in this site for rendering.
 	for _, s := range h.Sites {
 		for _, rf := range s.renderFormats {
 			select {
