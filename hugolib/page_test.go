@@ -791,19 +791,13 @@ weight = 2
 home = ["HTML", "JSON"]`)
 
 	b.WithTemplates("index.html", `
-{{- $pages := .Site.RegularPages -}}
 {{- range .Site.Home.Translations -}}
-	{{- $pages = $pages | union .Site.RegularPages -}}
+	<p>{{- .RenderString "foo" -}}</p>
 {{- end -}}
-<p>{{ len $pages }}</p>
 `, "_default/single.html",
 		`{{ .Content }}`,
 		"index.json",
-		`{{- $pages := .Site.RegularPages -}}
-{{- range .Site.Home.Translations -}}
-	{{- $pages = $pages | union .Site.RegularPages -}}
-{{- end -}}
-{{- dict "LenPages" (len $pages) | jsonify }}`,
+		`{"Title": "My Site"}`,
 	)
 
 	b.WithContent(
@@ -821,13 +815,11 @@ home = ["HTML", "JSON"]`)
 	c.Assert(err, qt.Equals, nil)
 
 	b.AssertFileContent("public/ru/index.html", `
-<p>2</p>
+<p>foo</p>
+<p>foo</p>
+<p>foo</p>
+<p>foo</p>
 `)
-
-	b.AssertFileContent("public/ru/index.json", `
-{ "LenPages": 2}
-`)
-	// TODO: make assertions re: home pages for english (html and json)
 
 }
 
