@@ -768,6 +768,69 @@ Here is the last report for commits in the year 2016. It covers hrev50718-hrev50
 `)
 }
 
+// Issue 9383
+func TestRenderStringForRegularPageTranslations(t *testing.T) {
+	c := qt.New(t)
+	b := newTestSitesBuilder(t)
+	b.WithLogger(loggers.NewBasicLoggerForWriter(jwalterweatherman.LevelDebug, os.Stderr))
+
+	b.WithConfigFile("toml",
+		`baseurl = "https://example.org/"
+title = "My Site"
+
+defaultContentLanguage = "ru"
+defaultContentLanguageInSubdir = true
+
+[languages.ru]
+weight = 1
+
+[languages.en]
+weight = 2
+
+[outputs]
+home = ["HTML", "JSON"]`)
+
+	b.WithTemplates("index.html", `
+{{- $pages := .Site.RegularPages -}}
+{{- range .Site.Home.Translations -}}
+	{{- $pages = $pages | union .Site.RegularPages -}}
+{{- end -}}
+<p>{{ len $pages }}</p>
+`, "_default/single.html",
+		`{{ .Content }}`,
+		"index.json",
+		`{{- $pages := .Site.RegularPages -}}
+{{- range .Site.Home.Translations -}}
+	{{- $pages = $pages | union .Site.RegularPages -}}
+{{- end -}}
+{{- dict "LenPages" (len $pages) | jsonify }}`,
+	)
+
+	b.WithContent(
+		"ru/a.md",
+		"",
+		"ru/b.md",
+		"",
+		"en/a.md",
+		"",
+		"en/b.md",
+		"",
+	)
+
+	err := b.BuildE(BuildCfg{})
+	c.Assert(err, qt.Equals, nil)
+
+	b.AssertFileContent("public/ru/index.html", `
+<p>2</p>
+`)
+
+	b.AssertFileContent("public/ru/index.json", `
+{ "LenPages": 2}
+`)
+	// TODO: make assertions re: home pages for english (html and json)
+
+}
+
 // Issue 8919
 func TestContentProviderWithCustomOutputFormat(t *testing.T) {
 	b := newTestSitesBuilder(t)
