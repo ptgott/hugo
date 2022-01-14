@@ -803,11 +803,7 @@ home = ["HTML", "JSON"]`)
 	b.WithContent(
 		"ru/a.md",
 		"",
-		"ru/b.md",
-		"",
 		"en/a.md",
-		"",
-		"en/b.md",
 		"",
 	)
 
@@ -815,8 +811,6 @@ home = ["HTML", "JSON"]`)
 	c.Assert(err, qt.Equals, nil)
 
 	b.AssertFileContent("public/ru/index.html", `
-<p>foo</p>
-<p>foo</p>
 <p>foo</p>
 <p>foo</p>
 `)
