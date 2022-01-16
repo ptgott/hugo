@@ -796,6 +796,9 @@ home = ["HTML", "JSON"]`)
 {{- range .Site.Home.Translations -}}
 	<p>{{- .RenderString "foo" -}}</p>
 {{- end -}}
+{{- range .Site.Home.AllTranslations -}}
+	<p>{{- .RenderString "bar" -}}</p>
+{{- end -}}
 `, "_default/single.html",
 		`{{ .Content }}`,
 		"index.json",
@@ -815,6 +818,15 @@ home = ["HTML", "JSON"]`)
 	b.AssertFileContent("public/ru/index.html", `
 <p>foo</p>
 <p>foo</p>
+<p>bar</p>
+<p>bar</p>
+`)
+
+	b.AssertFileContent("public/en/index.html", `
+<p>foo</p>
+<p>foo</p>
+<p>bar</p>
+<p>bar</p>
 `)
 
 }
