@@ -370,6 +370,9 @@ func (p *pageState) TranslationKey() string {
 func (p *pageState) AllTranslations() page.Pages {
 	p.s.h.init.translations.Do()
 
+	// Hugo attempts to reuse content providers while preparing each page for
+	// rendering. This approach means that sometimes, content providers for
+	// translations are not initialized. If needed, initialize them here.
 	for _, tr := range p.allTranslations {
 		tp, ok := tr.(*pageState)
 		if !ok {
@@ -392,6 +395,9 @@ func (p *pageState) AllTranslations() page.Pages {
 func (p *pageState) Translations() page.Pages {
 	p.s.h.init.translations.Do()
 
+	// Hugo attempts to reuse content providers while preparing each page for
+	// rendering. This approach means that sometimes, content providers for
+	// translations are not initialized. If needed, initialize them here.
 	for _, tr := range p.translations {
 		tp, ok := tr.(*pageState)
 		if !ok {
