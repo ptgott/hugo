@@ -1003,7 +1003,6 @@ func (p *pageState) shiftToOutputFormat(isRenderingSite bool, idx int) error {
 			}
 		}
 		p.pageOutput.initContentProvider(cp)
-		p.pageOutput.cp = cp
 	}
 
 	return nil
