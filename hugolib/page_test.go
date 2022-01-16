@@ -782,10 +782,12 @@ defaultContentLanguage = "ru"
 defaultContentLanguageInSubdir = true
 
 [languages.ru]
+contentDir = 'content/ru'
 weight = 1
 
 [languages.en]
 weight = 2
+contentDir = 'content/en'
 
 [outputs]
 home = ["HTML", "JSON"]`)
