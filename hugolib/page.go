@@ -369,12 +369,44 @@ func (p *pageState) TranslationKey() string {
 // AllTranslations returns all translations, including the current Page.
 func (p *pageState) AllTranslations() page.Pages {
 	p.s.h.init.translations.Do()
+
+	for _, tr := range p.allTranslations {
+		tp, ok := tr.(*pageState)
+		if !ok {
+			continue
+		}
+		if tp.pageOutput.cp == nil {
+			cp, err := newPageContentOutput(tp, tp.pageOutput)
+			if err != nil {
+				// This will be caught by texttemplate.safeCall
+				panic(fmt.Errorf("error rendering page translation: %w", err))
+			}
+			tp.initContentProvider(cp)
+		}
+	}
+
 	return p.allTranslations
 }
 
 // Translations returns the translations excluding the current Page.
 func (p *pageState) Translations() page.Pages {
 	p.s.h.init.translations.Do()
+
+	for _, tr := range p.translations {
+		tp, ok := tr.(*pageState)
+		if !ok {
+			continue
+		}
+		if tp.pageOutput.cp == nil {
+			cp, err := newPageContentOutput(tp, tp.pageOutput)
+			if err != nil {
+				// This will be caught by texttemplate.safeCall
+				panic(fmt.Errorf("error rendering page translation: %w", err))
+			}
+			tp.initContentProvider(cp)
+		}
+	}
+
 	return p.translations
 }
 

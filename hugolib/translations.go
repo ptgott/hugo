@@ -45,13 +45,6 @@ func assignTranslationsToPages(allTranslations map[string]page.Pages, sites []*S
 	for _, s := range sites {
 		s.pageMap.pageTrees.Walk(func(ss string, n *contentNode) bool {
 			p := n.p
-			if p.pageOutput.cp == nil {
-				cp, err := newPageContentOutput(p, p.pageOutput)
-				if err != nil {
-					return false
-				}
-				p.initContentProvider(cp)
-			}
 			base := p.TranslationKey()
 			translations, found := allTranslations[base]
 			if !found {
