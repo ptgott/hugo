@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"testing"
@@ -24,6 +25,8 @@ import (
 
 	"github.com/gohugoio/hugo/config"
 	"github.com/gohugoio/hugo/helpers"
+	"github.com/gohugoio/hugo/htesting"
+	"github.com/gohugoio/hugo/hugofs"
 
 	qt "github.com/frankban/quicktest"
 )
@@ -73,6 +76,76 @@ func TestServer(t *testing.T) {
 
 	// Stop the server.
 	stop <- true
+}
+
+// Issue 7538
+func TestServerReloadWithNewPartial(t *testing.T) {
+	c := qt.New(t)
+	dir, clean, err := htesting.CreateTempDir(hugofs.Os, "hugo-cli")
+	defer clean()
+
+	cfgStr := `
+
+baseURL = "https://example.org"
+title = "Hugo Commands"
+
+`
+	os.MkdirAll(filepath.Join(dir, "public"), 0777)
+	os.MkdirAll(filepath.Join(dir, "data"), 0777)
+	os.MkdirAll(filepath.Join(dir, "layouts"), 0777)
+
+	writeFile(t, filepath.Join(dir, "config.toml"), cfgStr)
+	writeFile(t, filepath.Join(dir, "content", "p1.md"), `
+---
+title: "P1"
+weight: 1
+---
+
+Content
+
+`)
+	c.Assert(err, qt.IsNil)
+
+	port := 1332
+
+	b := newCommandsBuilder()
+	stop := make(chan bool)
+	scmd := b.newServerCmdSignaled(stop)
+
+	defer func() {
+		// Stop the server.
+		fmt.Println("stopping the server")
+		stop <- true
+	}()
+
+	cmd := scmd.getCommand()
+	cmd.SetArgs([]string{
+		"-s=" + dir,
+		fmt.Sprintf("-p=%d", port),
+		"-d=" + filepath.Join(dir, "public"),
+	})
+
+	go func() {
+		_, err = cmd.ExecuteC()
+		c.Assert(err, qt.IsNil)
+	}()
+
+	// There is no way to know exactly when the server is ready for connections.
+	// We could improve by something like https://golang.org/pkg/net/http/httptest/#Server
+	// But for now, let us sleep and pray!
+	time.Sleep(2 * time.Second)
+
+	writeFile(t, filepath.Join(dir, "layouts", "partials", "mypartial.html"), `<p>my partial</p>`)
+	writeFile(t, filepath.Join(dir, "layouts", "_default", "single.html"), `{{ partial "mypartial.html" }}`)
+
+	// Wait for the server to make the change
+	time.Sleep(2 * time.Second)
+
+	af, err := os.ReadFile(filepath.Join(dir, "public", "p1", "index.html"))
+	c.Assert(err, qt.IsNil)
+	c.Assert(string(af), qt.Equals, `<p>my partial</p>`)
+
+	// t.FailNow()
 }
 
 func TestFixURL(t *testing.T) {
