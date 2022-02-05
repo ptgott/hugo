@@ -17,13 +17,17 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/gohugoio/hugo/config"
 	"github.com/gohugoio/hugo/helpers"
+	"github.com/gohugoio/hugo/htesting"
+	"github.com/gohugoio/hugo/hugofs"
 
 	qt "github.com/frankban/quicktest"
 )
@@ -73,6 +77,76 @@ func TestServer(t *testing.T) {
 
 	// Stop the server.
 	stop <- true
+}
+
+// Issue 8340
+func TestSigintAfterBadConfig(t *testing.T) {
+	c := qt.New(t)
+	dir, clean, err := htesting.CreateTempDir(hugofs.Os, "hugo-cli")
+	defer clean()
+
+	cfgStr := `
+
+baseURL = "https://example.org"
+title = "Hugo Commands"
+
+`
+	os.MkdirAll(filepath.Join(dir, "public"), 0777)
+	os.MkdirAll(filepath.Join(dir, "data"), 0777)
+	os.MkdirAll(filepath.Join(dir, "layouts"), 0777)
+
+	writeFile(t, filepath.Join(dir, "config.toml"), cfgStr)
+	writeFile(t, filepath.Join(dir, "content", "p1.md"), `
+---
+title: "P1"
+weight: 1
+---
+
+Content
+
+`)
+	c.Assert(err, qt.IsNil)
+
+	port := 1331
+
+	b := newCommandsBuilder()
+	stop := make(chan bool)
+	scmd := b.newServerCmdSignaled(stop)
+
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+
+	cmd := scmd.getCommand()
+	cmd.SetArgs([]string{
+		"-s=" + dir,
+		fmt.Sprintf("-p=%d", port),
+		"-d=" + filepath.Join(dir, "public"),
+	})
+
+	go func() {
+		_, err = cmd.ExecuteC()
+		c.Assert(err, qt.IsNil)
+		wg.Done()
+	}()
+
+	// Wait for the server to be ready
+	time.Sleep(2 * time.Second)
+
+	// Break the config file
+	writeFile(t, filepath.Join(dir, "config.toml"), `
+
+baseURL = "https://example.org"
+title = "Hugo Commands"
+theme = "notarealtheme
+
+`)
+
+	// Wait for the server to make the change
+	time.Sleep(2 * time.Second)
+
+	stop <- true
+
+	wg.Wait()
 }
 
 func TestFixURL(t *testing.T) {
