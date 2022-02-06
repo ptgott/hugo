@@ -79,8 +79,10 @@ func TestServer(t *testing.T) {
 	stop <- true
 }
 
+// Should be able to interrupt the hugo server command after the server detects
+// a configuration change and the configuration is malformed.
 // Issue 8340
-func TestSigintAfterBadConfig(t *testing.T) {
+func TestInterruptAfterBadConfig(t *testing.T) {
 	c := qt.New(t)
 	dir, clean, err := htesting.CreateTempDir(hugofs.Os, "hugo-cli")
 	defer clean()
@@ -147,6 +149,79 @@ theme = "notarealtheme
 	stop <- true
 
 	wg.Wait()
+}
+
+func TestFixBadConfig(t *testing.T) {
+	c := qt.New(t)
+	dir, clean, err := htesting.CreateTempDir(hugofs.Os, "hugo-cli")
+	defer clean()
+
+	cfgStr := `
+
+baseURL = "https://example.org"
+title = "Hugo Commands"
+
+`
+	os.MkdirAll(filepath.Join(dir, "public"), 0777)
+	os.MkdirAll(filepath.Join(dir, "data"), 0777)
+	os.MkdirAll(filepath.Join(dir, "layouts"), 0777)
+
+	writeFile(t, filepath.Join(dir, "config.toml"), cfgStr)
+	writeFile(t, filepath.Join(dir, "content", "p1.md"), `
+---
+title: "P1"
+weight: 1
+---
+
+Content
+
+`)
+	c.Assert(err, qt.IsNil)
+
+	port := 1331
+
+	b := newCommandsBuilder()
+	stop := make(chan bool)
+	scmd := b.newServerCmdSignaled(stop)
+
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+
+	cmd := scmd.getCommand()
+	cmd.SetArgs([]string{
+		"-s=" + dir,
+		fmt.Sprintf("-p=%d", port),
+		"-d=" + filepath.Join(dir, "public"),
+	})
+
+	go func() {
+		_, err = cmd.ExecuteC()
+		c.Assert(err, qt.IsNil)
+	}()
+	defer func() {
+		stop <- true
+	}()
+	// Wait for the server to be ready
+	time.Sleep(2 * time.Second)
+
+	// Break the config file
+	writeFile(t, filepath.Join(dir, "config.toml"), `
+
+baseURL = "https://example.org"
+title = "Hugo Commands"
+theme = "notarealtheme
+
+`)
+
+	// Wait for the server to make the change
+	time.Sleep(2 * time.Second)
+
+	// Fix the config file
+	writeFile(t, filepath.Join(dir, "config.toml"), cfgStr)
+
+	// wait for the FS watcher to react
+	time.Sleep(2 * time.Second)
+
 }
 
 func TestFixURL(t *testing.T) {
