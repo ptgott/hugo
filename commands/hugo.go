@@ -792,12 +792,16 @@ func (c *commandeer) fullRebuild(changeType string) {
 
 		defer c.timeTrack(time.Now(), "Rebuilt")
 
+		prevHugoState := c.commandeerHugoState
 		c.commandeerHugoState = newCommandeerHugoState()
 		err := c.loadConfig()
 		if err != nil {
 			// Set the processing on pause until the state is recovered.
 			c.paused = true
+			// Indicate that we have returned to the previous state and
+			// no more creation work needs to be done.
 			close(c.created)
+			c.commandeerHugoState = prevHugoState
 			c.handleBuildErr(err, "Failed to reload config")
 
 		} else {
