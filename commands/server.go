@@ -540,7 +540,11 @@ func (c *commandeer) serve(s *serverCmd) error {
 		<-sigs
 	}
 
-	c.hugo().Close()
+	// If Hugo encounters an error creating sites after reloading, c.hugo()
+	// can return nil. If so, no need to close it the *hugolib.HugoSites.
+	if hs := c.hugo(); hs != nil {
+		hs.Close()
+	}
 
 	return nil
 }

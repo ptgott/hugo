@@ -797,6 +797,7 @@ func (c *commandeer) fullRebuild(changeType string) {
 		if err != nil {
 			// Set the processing on pause until the state is recovered.
 			c.paused = true
+			close(c.created)
 			c.handleBuildErr(err, "Failed to reload config")
 
 		} else {
