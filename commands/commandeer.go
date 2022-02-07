@@ -409,7 +409,6 @@ func (c *commandeer) loadConfig() error {
 
 		err = c.initFs(fs)
 		if err != nil {
-			close(c.created)
 			return
 		}
 
