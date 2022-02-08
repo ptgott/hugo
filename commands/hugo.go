@@ -767,6 +767,7 @@ func (c *commandeer) partialReRender(urls ...string) error {
 }
 
 func (c *commandeer) fullRebuild(changeType string) {
+	fmt.Println("TESTDEBUG CALLING FULLREBUILD")
 	if changeType == configChangeGoMod {
 		// go.mod may be changed during the build itself, and
 		// we really want to prevent superfluous builds.
@@ -799,6 +800,7 @@ func (c *commandeer) fullRebuild(changeType string) {
 		c.commandeerHugoState.created = make(chan struct{})
 		prevHugoState := c.commandeerHugoState
 		c.commandeerHugoState = newCommandeerHugoState()
+		fmt.Println("TESTDEBUG CALLING LOADCONFIG")
 		err := c.loadConfig()
 		if err != nil {
 			// Set the processing on pause until the state is recovered.
@@ -806,10 +808,12 @@ func (c *commandeer) fullRebuild(changeType string) {
 			c.commandeerHugoState = prevHugoState
 			// Indicate that we have returned to the previous state and
 			// no more creation work needs to be done.
+			fmt.Println("TESTDEBUG CLOSING CHANNEL IN SAD PATH")
 			close(c.created)
 			c.handleBuildErr(err, "Failed to reload config")
 
 		} else {
+			fmt.Println("TESTDEBUG CLOSING CHANNEL IN HAPPY PATH")
 			close(c.created)
 			c.paused = false
 		}

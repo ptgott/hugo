@@ -83,6 +83,10 @@ func TestServer(t *testing.T) {
 // a configuration change and the configuration is malformed.
 // Issue 8340
 func TestInterruptAfterBadConfig(t *testing.T) {
+	// Test failure takes the form of a timeout here, so
+	// ensure there's always a timeout.
+	bail := time.After(time.Duration(15) * time.Second)
+
 	c := qt.New(t)
 	dir, clean, err := htesting.CreateTempDir(hugofs.Os, "hugo-cli")
 	defer clean()
@@ -146,12 +150,19 @@ theme = "notarealtheme
 	// Wait for the server to make the change
 	time.Sleep(2 * time.Second)
 
-	stop <- true
+	select {
+	case stop <- true:
+		wg.Wait()
+	case <-bail:
+		t.FailNow()
+	}
 
-	wg.Wait()
 }
 
 func TestFixBadConfig(t *testing.T) {
+	// Test failure takes the form of a timeout here, so
+	// ensure there's always a timeout.
+	bail := time.After(time.Duration(15) * time.Second)
 	c := qt.New(t)
 	dir, clean, err := htesting.CreateTempDir(hugofs.Os, "hugo-cli")
 	defer clean()
@@ -181,6 +192,7 @@ Content
 	port := 1331
 
 	b := newCommandsBuilder()
+	b.logging = true
 	stop := make(chan bool)
 	scmd := b.newServerCmdSignaled(stop)
 
@@ -197,9 +209,6 @@ Content
 	go func() {
 		_, err = cmd.ExecuteC()
 		c.Assert(err, qt.IsNil)
-	}()
-	defer func() {
-		stop <- true
 	}()
 	// Wait for the server to be ready
 	time.Sleep(2 * time.Second)
@@ -219,9 +228,15 @@ theme = "notarealtheme
 	// Fix the config file
 	writeFile(t, filepath.Join(dir, "config.toml"), cfgStr)
 
-	// wait for the FS watcher to react
+	// wait for the FS watcher to respond
 	time.Sleep(2 * time.Second)
 
+	select {
+	case stop <- true:
+		wg.Wait()
+	case <-bail:
+		t.FailNow()
+	}
 }
 
 func TestFixURL(t *testing.T) {
