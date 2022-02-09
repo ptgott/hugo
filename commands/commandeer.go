@@ -409,6 +409,7 @@ func (c *commandeer) loadConfig() error {
 
 		err = c.initFs(fs)
 		if err != nil {
+			close(c.created)
 			return
 		}
 
@@ -424,7 +425,6 @@ func (c *commandeer) loadConfig() error {
 		if c.buildLock == nil {
 			c.buildLock = h.LockBuild
 		}
-		close(c.created)
 	})
 
 	if err != nil {
