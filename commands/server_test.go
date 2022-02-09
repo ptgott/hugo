@@ -209,6 +209,7 @@ Content
 	go func() {
 		_, err = cmd.ExecuteC()
 		c.Assert(err, qt.IsNil)
+		wg.Done()
 	}()
 	// Wait for the server to be ready
 	time.Sleep(2 * time.Second)
