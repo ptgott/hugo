@@ -52,7 +52,16 @@ type commandeerHugoState struct {
 	*deps.DepsCfg
 	hugoSites *hugolib.HugoSites
 	fsCreate  sync.Once
-	created   chan struct{}
+
+	// Whether we created the hugoSites. Goroutines depending on
+	// commandeerHugoState.hugoSites should check created first, since
+	// hugoSites may be stale.
+	created bool
+
+	// Used for synchronizing goroutines to the status of created
+	cond *sync.Cond
+	// Used for locking cond
+	mu *sync.RWMutex
 }
 
 type commandeer struct {
@@ -106,13 +115,18 @@ type commandeer struct {
 }
 
 func newCommandeerHugoState() *commandeerHugoState {
+	mu := &sync.RWMutex{}
 	return &commandeerHugoState{
-		created: make(chan struct{}),
+		created: false,
+		mu:      mu,
+		cond:    sync.NewCond(mu),
 	}
 }
 
 func (c *commandeerHugoState) hugo() *hugolib.HugoSites {
-	<-c.created
+	if !c.created {
+		c.cond.Wait()
+	}
 	return c.hugoSites
 }
 
