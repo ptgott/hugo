@@ -20,7 +20,6 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"sync"
 	"testing"
 	"time"
 
@@ -83,9 +82,9 @@ func TestServer(t *testing.T) {
 // a configuration change and the configuration is malformed.
 // Issue 8340
 func TestInterruptAfterBadConfig(t *testing.T) {
-	// Test failure takes the form of a timeout here, so
-	// ensure there's always a timeout.
-	bail := time.After(time.Duration(15) * time.Second)
+	// Test failure takes the form of a timeout here, so ensure there's always
+	// a timeout, and that it isn't overly long.
+	bail := time.After(time.Duration(10) * time.Second)
 
 	c := qt.New(t)
 	dir, clean, err := htesting.CreateTempDir(hugofs.Os, "hugo-cli")
@@ -117,10 +116,8 @@ Content
 
 	b := newCommandsBuilder()
 	stop := make(chan bool)
+	done := make(chan struct{})
 	scmd := b.newServerCmdSignaled(stop)
-
-	wg := sync.WaitGroup{}
-	wg.Add(1)
 
 	cmd := scmd.getCommand()
 	cmd.SetArgs([]string{
@@ -129,11 +126,11 @@ Content
 		"-d=" + filepath.Join(dir, "public"),
 	})
 
-	go func() {
+	go func(n chan struct{}) {
 		_, err = cmd.ExecuteC()
 		c.Assert(err, qt.IsNil)
-		wg.Done()
-	}()
+		done <- struct{}{}
+	}(done)
 
 	// Wait for the server to be ready
 	time.Sleep(2 * time.Second)
@@ -150,19 +147,24 @@ theme = "notarealtheme
 	// Wait for the server to make the change
 	time.Sleep(2 * time.Second)
 
+	go func() {
+		// don't block on stopping the server
+		stop <- true
+	}()
+
 	select {
-	case stop <- true:
-		wg.Wait()
+	case <-done:
+		return
 	case <-bail:
-		t.FailNow()
+		t.Fatal("test timed out waiting for the server to stop")
 	}
 
 }
 
 func TestFixBadConfig(t *testing.T) {
-	// Test failure takes the form of a timeout here, so
-	// ensure there's always a timeout.
-	bail := time.After(time.Duration(15) * time.Second)
+	// Test failure takes the form of a timeout here, so ensure there's always
+	// a timeout, and that it isn't overly long.
+	bail := time.After(time.Duration(10) * time.Second)
 	c := qt.New(t)
 	dir, clean, err := htesting.CreateTempDir(hugofs.Os, "hugo-cli")
 	defer clean()
@@ -194,10 +196,8 @@ Content
 	b := newCommandsBuilder()
 	b.logging = true
 	stop := make(chan bool)
+	done := make(chan struct{})
 	scmd := b.newServerCmdSignaled(stop)
-
-	wg := sync.WaitGroup{}
-	wg.Add(1)
 
 	cmd := scmd.getCommand()
 	cmd.SetArgs([]string{
@@ -206,11 +206,12 @@ Content
 		"-d=" + filepath.Join(dir, "public"),
 	})
 
-	go func() {
+	go func(n chan struct{}) {
 		_, err = cmd.ExecuteC()
 		c.Assert(err, qt.IsNil)
-		wg.Done()
-	}()
+		done <- struct{}{}
+	}(done)
+
 	// Wait for the server to be ready
 	time.Sleep(2 * time.Second)
 
@@ -229,14 +230,19 @@ theme = "notarealtheme
 	// Fix the config file
 	writeFile(t, filepath.Join(dir, "config.toml"), cfgStr)
 
-	// wait for the FS watcher to respond
+	// Wait for the FS watcher to respond
 	time.Sleep(2 * time.Second)
 
+	go func() {
+		// don't block on stopping the server
+		stop <- true
+	}()
+
 	select {
-	case stop <- true:
-		wg.Wait()
+	case <-done:
+		return
 	case <-bail:
-		t.FailNow()
+		t.Fatal("test timed out waiting for the server to stop")
 	}
 }
 
