@@ -61,7 +61,7 @@ type commandeerHugoState struct {
 	// Used for synchronizing goroutines to the status of created
 	cond *sync.Cond
 	// Used for locking cond
-	mu *sync.RWMutex
+	mu *sync.Mutex
 }
 
 type commandeer struct {
@@ -115,7 +115,7 @@ type commandeer struct {
 }
 
 func newCommandeerHugoState() *commandeerHugoState {
-	mu := &sync.RWMutex{}
+	mu := &sync.Mutex{}
 	return &commandeerHugoState{
 		created: false,
 		mu:      mu,
@@ -423,7 +423,6 @@ func (c *commandeer) loadConfig() error {
 
 		err = c.initFs(fs)
 		if err != nil {
-			close(c.created)
 			return
 		}
 

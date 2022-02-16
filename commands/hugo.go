@@ -793,29 +793,30 @@ func (c *commandeer) fullRebuild(changeType string) {
 
 		defer c.timeTrack(time.Now(), "Rebuilt")
 
-		// We need to preserve the previous Hugo state so we can roll back the
-		// new state if we fail to reload the user's configuration. To prevent
-		// premature reads of the hugo state by other goroutines, we reset the
-		// created channel.
-		c.commandeerHugoState.created = make(chan struct{})
-		prevHugoState := c.commandeerHugoState
-		c.commandeerHugoState = newCommandeerHugoState()
+		// Preserve the previous Hugo state so we can roll back the new state
+		// if we fail to reload the user's configuration.
+		c.created = false
+		p := c.commandeerHugoState
+		n := newCommandeerHugoState()
 		fmt.Println("TESTDEBUG CALLING LOADCONFIG")
 		err := c.loadConfig()
 		if err != nil {
 			// Set the processing on pause until the state is recovered.
 			c.paused = true
-			c.commandeerHugoState = prevHugoState
+			c.commandeerHugoState = p
 			// Indicate that we have returned to the previous state and
 			// no more creation work needs to be done.
 			fmt.Println("TESTDEBUG CLOSING CHANNEL IN SAD PATH")
-			close(c.created)
+			c.created = true
+			c.cond.Broadcast()
 			c.handleBuildErr(err, "Failed to reload config")
 
 		} else {
 			fmt.Println("TESTDEBUG CLOSING CHANNEL IN HAPPY PATH")
-			close(c.created)
+			c.commandeerHugoState = n
+			c.created = true
 			c.paused = false
+			c.cond.Broadcast()
 		}
 
 		if !c.paused {
