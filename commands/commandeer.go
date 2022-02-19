@@ -24,6 +24,7 @@ import (
 	"time"
 
 	hconfig "github.com/gohugoio/hugo/config"
+	"github.com/gohugoio/hugo/lazy"
 
 	"golang.org/x/sync/semaphore"
 
@@ -52,7 +53,7 @@ type commandeerHugoState struct {
 	*deps.DepsCfg
 	hugoSites *hugolib.HugoSites
 	fsCreate  sync.Once
-	created   chan struct{}
+	created   *lazy.Notifier
 }
 
 type commandeer struct {
@@ -107,12 +108,12 @@ type commandeer struct {
 
 func newCommandeerHugoState() *commandeerHugoState {
 	return &commandeerHugoState{
-		created: make(chan struct{}),
+		created: lazy.NewNotifier(),
 	}
 }
 
 func (c *commandeerHugoState) hugo() *hugolib.HugoSites {
-	<-c.created
+	c.created.Wait()
 	return c.hugoSites
 }
 
@@ -359,7 +360,6 @@ func (c *commandeer) loadConfig() error {
 	if err != nil {
 		return err
 	}
-
 	cfg.Logger = logger
 	c.logger = logger
 	c.serverConfig, err = hconfig.DecodeServer(cfg.Cfg)
@@ -409,7 +409,7 @@ func (c *commandeer) loadConfig() error {
 
 		err = c.initFs(fs)
 		if err != nil {
-			close(c.created)
+			c.created.Close()
 			return
 		}
 
@@ -425,7 +425,7 @@ func (c *commandeer) loadConfig() error {
 		if c.buildLock == nil && h != nil {
 			c.buildLock = h.LockBuild
 		}
-		close(c.created)
+		c.created.Close()
 	})
 
 	if err != nil {
