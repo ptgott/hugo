@@ -803,6 +803,15 @@ func (c *commandeer) fullRebuild(changeType string) {
 		if err != nil {
 			// Set the processing on pause until the state is recovered.
 			c.paused = true
+
+			select {
+			// Already closed
+			case <-c.created:
+			default:
+				// The created channel is still open but config could not be
+				// loaded. Close the channel so receivers stop waiting.
+				close(c.created)
+			}
 			c.handleBuildErr(err, "Failed to reload config")
 
 		} else {
