@@ -540,7 +540,11 @@ func (c *commandeer) serve(s *serverCmd) error {
 		<-sigs
 	}
 
-	c.hugo().Close()
+	// h will be nil if there was an error preparing the Hugo environment,
+	// e.g., if we couldn't load the config.
+	if h := c.hugo(); h != nil {
+		h.Close()
+	}
 
 	return nil
 }
