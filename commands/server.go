@@ -542,7 +542,11 @@ func (c *commandeer) serve(s *serverCmd) error {
 
 	// h will be nil if there was an error preparing the Hugo environment,
 	// e.g., if we couldn't load the config.
-	if h := c.hugo(); h != nil {
+	fmt.Printf("address of c: %v\n", &c)
+	fmt.Printf("address of c.logger: %v\n", &c.logger)
+	h := c.hugo()
+	fmt.Printf("Address of h: %v\n", &h)
+	if h != nil {
 		h.Close()
 	}
 

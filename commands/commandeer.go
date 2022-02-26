@@ -16,6 +16,7 @@ package commands
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -112,7 +113,9 @@ func newCommandeerHugoState() *commandeerHugoState {
 }
 
 func (c *commandeerHugoState) hugo() *hugolib.HugoSites {
+	fmt.Printf("address of c.created in hugo(): %v\n", &c.created)
 	<-c.created
+	fmt.Printf("address of c.hugoSites in hugo(): %v\n", &c.hugoSites)
 	return c.hugoSites
 }
 
@@ -355,13 +358,26 @@ func (c *commandeer) loadConfig() error {
 		}
 	}
 
-	logger, err := c.createLogger(config)
-	if err != nil {
-		return err
+	// Don't try to recreate the logger if it already exists (i.e., we're
+	// reloading the config). Doing otherwise leads to a race condition since
+	// we could be making logger calls from other goroutines.
+	var logger loggers.Logger
+	switch {
+	case cfg.Logger != nil && c.logger != nil:
+		break
+	case cfg.Logger == nil && c.logger != nil:
+		cfg.Logger = c.logger
+	case cfg.Logger != nil && c.logger == nil:
+		c.logger = cfg.Logger
+	case cfg.Logger == nil && c.logger == nil:
+		logger, err = c.createLogger(config)
+		if err != nil {
+			return err
+		}
+		cfg.Logger = logger
+		c.logger = logger
 	}
 
-	cfg.Logger = logger
-	c.logger = logger
 	c.serverConfig, err = hconfig.DecodeServer(cfg.Cfg)
 	if err != nil {
 		return err
