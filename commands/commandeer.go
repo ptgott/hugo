@@ -16,7 +16,6 @@ package commands
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -113,9 +112,7 @@ func newCommandeerHugoState() *commandeerHugoState {
 }
 
 func (c *commandeerHugoState) hugo() *hugolib.HugoSites {
-	fmt.Printf("address of c.created in hugo(): %v\n", &c.created)
 	<-c.created
-	fmt.Printf("address of c.hugoSites in hugo(): %v\n", &c.hugoSites)
 	return c.hugoSites
 }
 
