@@ -798,20 +798,13 @@ func (c *commandeer) fullRebuild(changeType string) {
 
 		defer c.timeTrack(time.Now(), "Rebuilt")
 
-		c.commandeerHugoState = newCommandeerHugoState()
+		c.created.Reset()
 		err := c.loadConfig()
 		if err != nil {
 			// Set the processing on pause until the state is recovered.
 			c.paused = true
 
-			select {
-			// Already closed
-			case <-c.created:
-			default:
-				// The created channel is still open but config could not be
-				// loaded. Close the channel so receivers stop waiting.
-				close(c.created)
-			}
+			c.created.Close()
 			c.handleBuildErr(err, "Failed to reload config")
 
 		} else {

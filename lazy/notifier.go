@@ -49,7 +49,13 @@ func (n *Notifier) Wait() {
 func (n *Notifier) Close() {
 	n.mu.Lock()
 	defer n.mu.Unlock()
-	close(n.ch)
+	// Prevent us from closing an already closed channel
+	select {
+	// Already closed
+	case <-n.ch:
+	default:
+		close(n.ch)
+	}
 	return
 }
 
