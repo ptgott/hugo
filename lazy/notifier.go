@@ -22,6 +22,8 @@ import "sync"
 //
 // Notifier must be initialized by calling NewNotifier.
 type Notifier struct {
+	// The channel used for notifying consumers of readiness. This
+	// must not be accessed directly. Use curretChannel instead.
 	ch chan struct{}
 	// For locking the channel while resetting it
 	mu *sync.RWMutex
@@ -36,25 +38,30 @@ func NewNotifier() *Notifier {
 	}
 }
 
+func (n *Notifier) currentChannel() chan struct{} {
+	n.mu.RLock()
+	defer n.mu.RUnlock()
+	return n.ch
+}
+
 // Wait waits for the Notifier to be ready, i.e., for Close to be called
 // somewhere
 func (n *Notifier) Wait() {
-	n.mu.RLock()
-	defer n.mu.RUnlock()
-	<-n.ch
+	<-n.currentChannel()
 	return
 }
 
 // Close unblocks any goroutines that called Wait
 func (n *Notifier) Close() {
+	ch := n.currentChannel()
 	n.mu.Lock()
 	defer n.mu.Unlock()
 	// Prevent us from closing an already closed channel
 	select {
 	// Already closed
-	case <-n.ch:
+	case <-ch:
 	default:
-		close(n.ch)
+		close(ch)
 	}
 	return
 }
