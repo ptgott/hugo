@@ -22,8 +22,8 @@ import "sync"
 //
 // Notifier must be initialized by calling NewNotifier.
 type Notifier struct {
-	// The channel used for notifying consumers of readiness. This
-	// must not be accessed directly. Use curretChannel instead.
+	// Channel to close when the protected resource is ready. This must only
+	// be accessed via calling the currentCh method to avoid race conditions.
 	ch chan struct{}
 	// For locking the channel while resetting it
 	mu *sync.RWMutex
@@ -38,7 +38,22 @@ func NewNotifier() *Notifier {
 	}
 }
 
-func (n *Notifier) currentChannel() chan struct{} {
+func (n *Notifier) isClosed() bool {
+	ch := n.currentCh()
+	n.mu.RLock()
+	defer n.mu.RUnlock()
+	select {
+	// Already closed
+	case <-ch:
+		return true
+	default:
+		return false
+	}
+}
+
+// currentCh safely returns the current channel. Because this locks and unlocks
+// the mutex, must not perform any other locking until the channel is returned.
+func (n *Notifier) currentCh() chan struct{} {
 	n.mu.RLock()
 	defer n.mu.RUnlock()
 	return n.ch
@@ -47,20 +62,17 @@ func (n *Notifier) currentChannel() chan struct{} {
 // Wait waits for the Notifier to be ready, i.e., for Close to be called
 // somewhere
 func (n *Notifier) Wait() {
-	<-n.currentChannel()
+	ch := n.currentCh()
+	<-ch
 	return
 }
 
 // Close unblocks any goroutines that called Wait
 func (n *Notifier) Close() {
-	ch := n.currentChannel()
-	n.mu.Lock()
-	defer n.mu.Unlock()
-	// Prevent us from closing an already closed channel
-	select {
-	// Already closed
-	case <-ch:
-	default:
+	ch := n.currentCh()
+	if !n.isClosed() {
+		n.mu.Lock()
+		defer n.mu.Unlock()
 		close(ch)
 	}
 	return
@@ -68,6 +80,10 @@ func (n *Notifier) Close() {
 
 // Reset returns the resource to its pre-ready state while locking
 func (n *Notifier) Reset() {
+	// No need to reset since the channel is open
+	if !n.isClosed() {
+		return
+	}
 	n.mu.Lock()
 	defer n.mu.Unlock()
 	n.ch = make(chan struct{})
