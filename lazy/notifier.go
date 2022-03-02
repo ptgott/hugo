@@ -13,7 +13,10 @@
 
 package lazy
 
-import "sync"
+import (
+	"fmt"
+	"sync"
+)
 
 // Notifier as a synchronization tool that is queried for just-in-time access
 // to a resource. Callers use Wait to block until the resource is ready, and
@@ -38,10 +41,9 @@ func NewNotifier() *Notifier {
 	}
 }
 
-func (n *Notifier) isClosed() bool {
-	ch := n.currentCh()
-	n.mu.RLock()
-	defer n.mu.RUnlock()
+// isClosed checks whether a channel is closed. If calling from a Notifier
+// method, the calling goroutine must hold and release the Notifier.mu lock.
+func isClosed(ch chan struct{}) bool {
 	select {
 	// Already closed
 	case <-ch:
@@ -63,6 +65,7 @@ func (n *Notifier) currentCh() chan struct{} {
 // somewhere
 func (n *Notifier) Wait() {
 	ch := n.currentCh()
+	fmt.Printf("NOTIFIER: WAIT IS BEING CALLED WITH CHANNEL %v\n", &ch)
 	<-ch
 	return
 }
@@ -70,9 +73,10 @@ func (n *Notifier) Wait() {
 // Close unblocks any goroutines that called Wait
 func (n *Notifier) Close() {
 	ch := n.currentCh()
-	if !n.isClosed() {
-		n.mu.Lock()
-		defer n.mu.Unlock()
+	fmt.Printf("NOTIFIER: CLOSE IS BEING CALLED with channel %v\n", &ch)
+	n.mu.Lock()
+	defer n.mu.Unlock()
+	if !isClosed(ch) {
 		close(ch)
 	}
 	return
@@ -80,8 +84,10 @@ func (n *Notifier) Close() {
 
 // Reset returns the resource to its pre-ready state while locking
 func (n *Notifier) Reset() {
+	ch := n.currentCh()
+	fmt.Printf("NOTIFIER: RESET IS BEING CALLED with channel %v\n", &ch)
 	// No need to reset since the channel is open
-	if !n.isClosed() {
+	if !isClosed(ch) {
 		return
 	}
 	n.mu.Lock()
