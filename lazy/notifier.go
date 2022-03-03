@@ -65,7 +65,7 @@ func (n *Notifier) currentCh() chan struct{} {
 // somewhere
 func (n *Notifier) Wait() {
 	ch := n.currentCh()
-	fmt.Printf("NOTIFIER: WAIT IS BEING CALLED WITH CHANNEL %v\n", &ch)
+	fmt.Printf("NOTIFIER: WAIT IS BEING CALLED WITH CHANNEL %v\n", ch)
 	<-ch
 	return
 }
@@ -73,7 +73,7 @@ func (n *Notifier) Wait() {
 // Close unblocks any goroutines that called Wait
 func (n *Notifier) Close() {
 	ch := n.currentCh()
-	fmt.Printf("NOTIFIER: CLOSE IS BEING CALLED with channel %v\n", &ch)
+	fmt.Printf("NOTIFIER: CLOSE IS BEING CALLED with channel %v\n", ch)
 	n.mu.Lock()
 	defer n.mu.Unlock()
 	if !isClosed(ch) {
@@ -85,12 +85,12 @@ func (n *Notifier) Close() {
 // Reset returns the resource to its pre-ready state while locking
 func (n *Notifier) Reset() {
 	ch := n.currentCh()
-	fmt.Printf("NOTIFIER: RESET IS BEING CALLED with channel %v\n", &ch)
+	fmt.Printf("NOTIFIER: RESET IS BEING CALLED with channel %v\n", ch)
+	n.mu.Lock()
 	// No need to reset since the channel is open
 	if !isClosed(ch) {
 		return
 	}
-	n.mu.Lock()
 	defer n.mu.Unlock()
 	n.ch = make(chan struct{})
 	return
