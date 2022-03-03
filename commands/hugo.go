@@ -809,6 +809,7 @@ func (c *commandeer) fullRebuild(changeType string) {
 
 		} else {
 			c.paused = false
+			c.created.Close()
 		}
 
 		if !c.paused {
