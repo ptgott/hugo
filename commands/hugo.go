@@ -884,6 +884,10 @@ func (c *commandeer) newWatcher(pollIntervalStr string, dirList ...string) (*wat
 					return
 				}
 				c.handleEvents(watcher, staticSyncer, evs, configSet)
+				// We might be reloading the configuration in a separate
+				// goroutine, so make sure the config is ready before we
+				// read from it.
+				c.created.Wait()
 				if c.showErrorInBrowser && c.errCount() > 0 {
 					// Need to reload browser to show the error
 					livereload.ForceRefresh()
