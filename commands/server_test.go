@@ -191,7 +191,7 @@ theme = "notarealtheme
 func TestFixBadConfig(t *testing.T) {
 	// Test failure takes the form of a timeout here, so ensure there's always
 	// a timeout, and that it isn't overly long.
-	bail := time.After(time.Duration(32) * time.Second)
+	bail := time.After(time.Duration(10) * time.Second)
 	c := qt.New(t)
 	dir, clean, err := htesting.CreateTempDir(hugofs.Os, "hugo-cli")
 	defer clean()

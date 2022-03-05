@@ -53,7 +53,8 @@ func isClosed(ch chan struct{}) bool {
 }
 
 // currentCh safely returns the current channel. Because this locks and unlocks
-// the mutex, must not perform any other locking until the channel is returned.
+// the mutex, callers must not perform any other locking until the channel is
+// returned.
 func (n *Notifier) currentCh() chan struct{} {
 	n.mu.RLock()
 	defer n.mu.RUnlock()
