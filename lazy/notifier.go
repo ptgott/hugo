@@ -14,6 +14,7 @@
 package lazy
 
 import (
+	"fmt"
 	"sync"
 )
 
@@ -56,6 +57,7 @@ func isClosed(ch chan struct{}) bool {
 // the mutex, callers must not perform any other locking until the channel is
 // returned.
 func (n *Notifier) currentCh() chan struct{} {
+	fmt.Println("LOADCONFIG TEST: CALLING CURRENTCH IN NOTIFIER")
 	n.mu.RLock()
 	defer n.mu.RUnlock()
 	return n.ch
@@ -64,6 +66,7 @@ func (n *Notifier) currentCh() chan struct{} {
 // Wait waits for the Notifier to be ready, i.e., for Close to be called
 // somewhere
 func (n *Notifier) Wait() {
+	fmt.Println("LOADCONFIG TEST: CALLING WAIT IN NOTIFIER")
 	ch := n.currentCh()
 	<-ch
 	return
@@ -71,6 +74,7 @@ func (n *Notifier) Wait() {
 
 // Close unblocks any goroutines that called Wait
 func (n *Notifier) Close() {
+	fmt.Println("LOADCONFIG TEST: CALLING CLOSE IN NOTIFIER")
 	ch := n.currentCh()
 	n.mu.Lock()
 	defer n.mu.Unlock()
@@ -82,6 +86,7 @@ func (n *Notifier) Close() {
 
 // Reset returns the resource to its pre-ready state while locking
 func (n *Notifier) Reset() {
+	fmt.Println("LOADCONFIG TEST: CALLING RESET IN NOTIFIER")
 	ch := n.currentCh()
 	n.mu.Lock()
 	// No need to reset since the channel is open

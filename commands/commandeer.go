@@ -16,6 +16,7 @@ package commands
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -259,6 +260,7 @@ func (f *fileChangeDetector) PrepareNew() {
 }
 
 func (c *commandeer) loadConfig() error {
+	fmt.Println("LOADCONFIG TEST: CALLING LOADCONFIG")
 	if c.DepsCfg == nil {
 		c.DepsCfg = &deps.DepsCfg{}
 	}
@@ -361,6 +363,7 @@ func (c *commandeer) loadConfig() error {
 		return err
 	}
 
+	fmt.Println("LOADCONFIG TEST: ASSIGNING LOGGER")
 	cfg.Logger = logger
 	c.logger = logger
 	c.serverConfig, err = hconfig.DecodeServer(cfg.Cfg)
