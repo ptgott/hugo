@@ -356,26 +356,13 @@ func (c *commandeer) loadConfig() error {
 		}
 	}
 
-	// Don't try to recreate the logger if it already exists (i.e., we're
-	// reloading the config). Doing otherwise leads to a race condition since
-	// we could be making logger calls from other goroutines.
-	var logger loggers.Logger
-	switch {
-	case cfg.Logger != nil && c.logger != nil:
-		break
-	case cfg.Logger == nil && c.logger != nil:
-		cfg.Logger = c.logger
-	case cfg.Logger != nil && c.logger == nil:
-		c.logger = cfg.Logger
-	case cfg.Logger == nil && c.logger == nil:
-		logger, err = c.createLogger(config)
-		if err != nil {
-			return err
-		}
-		cfg.Logger = logger
-		c.logger = logger
+	logger, err := c.createLogger(config)
+	if err != nil {
+		return err
 	}
 
+	cfg.Logger = logger
+	c.logger = logger
 	c.serverConfig, err = hconfig.DecodeServer(cfg.Cfg)
 	if err != nil {
 		return err
