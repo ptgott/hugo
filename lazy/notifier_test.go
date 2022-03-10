@@ -13,35 +13,50 @@
 
 package lazy
 
-import "testing"
+import (
+	"math/rand"
+	"testing"
+	"testing/quick"
+	"time"
+)
 
-type builder struct {
-	value      int
-	built      *Notifier
-	otherValue int
-}
-
-func (b *builder) editValue() {
-	go func() {
-		b.built.Reset()
-		b.makeValueFive()
-		b.built.Close()
-	}()
-}
-
-func (b *builder) makeValueFive() {
-	b.value = 5
-}
-
-func TestNotifierRace(t *testing.T) {
-	b := &builder{
-		built: NewNotifier(),
-	}
-	go func() {
-		b.editValue()
-		b.built.Wait()
-		if b.value > 0 {
-			b.otherValue = 3
+func TestNotifier(t *testing.T) {
+	err := quick.Check(func() bool {
+		rand.Seed(time.Now().UnixNano())
+		type foo struct {
+			value   int
+			created *Notifier
 		}
-	}()
+
+		f := foo{
+			created: NewNotifier(),
+			value:   3,
+		}
+		f.value = 3
+		go func() {
+			time.Sleep(time.Duration(rand.Intn(100) * int(time.Millisecond)))
+			f.value = 5
+			f.created.Close()
+		}()
+		f.created.Wait()
+		if f.value != 5 {
+			return false
+		}
+		f.created.Reset()
+		go func() {
+			time.Sleep(time.Duration(rand.Intn(100) * int(time.Millisecond)))
+			f.value = 6
+			f.created.Close()
+		}()
+		f.created.Wait()
+		return f.value == 6
+
+	}, &quick.Config{
+		MaxCount: 100,
+	})
+
+	if err != nil {
+		t.Error("expecting a value we had to wait for, but did not get it")
+	}
+
 }
