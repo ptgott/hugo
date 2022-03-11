@@ -887,9 +887,9 @@ func (c *commandeer) newWatcher(pollIntervalStr string, dirList ...string) (*wat
 				// We might be reloading the configuration in a separate
 				// goroutine, so make sure the config is ready before we
 				// read from it.
-				fmt.Println("LOADCONFIG TEST: CALLING WAIT IN NEWWATCHER")
+				fmt.Printf("LOADCONFIG TEST: CALLING WAIT IN NEWWATCHER at %v\n", time.Now())
 				c.created.Wait()
-				fmt.Println("LOADCONFIG TEST: CALLING ERRCOUNT IN NEWWATCHER")
+				fmt.Printf("LOADCONFIG TEST: CALLING ERRCOUNT IN NEWWATCHER at %v\n", time.Now())
 				if c.showErrorInBrowser && c.errCount() > 0 {
 					// Need to reload browser to show the error
 					livereload.ForceRefresh()
@@ -970,6 +970,7 @@ func (c *commandeer) handleEvents(watcher *watcher.Batcher,
 			}
 
 			// Config file(s) changed. Need full rebuild.
+			fmt.Printf("LOADCONFIG TEST: FULL REBUILD AT %v\n", time.Now())
 			c.fullRebuild(configChangeType)
 
 			return

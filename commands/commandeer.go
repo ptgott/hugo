@@ -260,7 +260,7 @@ func (f *fileChangeDetector) PrepareNew() {
 }
 
 func (c *commandeer) loadConfig() error {
-	fmt.Println("LOADCONFIG TEST: CALLING LOADCONFIG")
+	fmt.Printf("LOADCONFIG TEST: CALLING LOADCONFIG at %v\n", time.Now())
 	if c.DepsCfg == nil {
 		c.DepsCfg = &deps.DepsCfg{}
 	}
@@ -363,7 +363,7 @@ func (c *commandeer) loadConfig() error {
 		return err
 	}
 
-	fmt.Println("LOADCONFIG TEST: ASSIGNING LOGGER")
+	fmt.Printf("LOADCONFIG TEST: ASSIGNING LOGGER at %v\n", time.Now())
 	cfg.Logger = logger
 	c.logger = logger
 	c.serverConfig, err = hconfig.DecodeServer(cfg.Cfg)
