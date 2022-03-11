@@ -14,49 +14,39 @@
 package lazy
 
 import (
-	"math/rand"
 	"testing"
-	"testing/quick"
 	"time"
 )
 
 func TestNotifier(t *testing.T) {
-	err := quick.Check(func() bool {
-		rand.Seed(time.Now().UnixNano())
-		type foo struct {
-			value   int
-			created *Notifier
-		}
-
-		f := foo{
-			created: NewNotifier(),
-			value:   3,
-		}
-		f.value = 3
-		go func() {
-			time.Sleep(time.Duration(rand.Intn(100) * int(time.Millisecond)))
-			f.value = 5
-			f.created.Close()
-		}()
-		f.created.Wait()
-		if f.value != 5 {
-			return false
-		}
-		f.created.Reset()
-		go func() {
-			time.Sleep(time.Duration(rand.Intn(100) * int(time.Millisecond)))
-			f.value = 6
-			f.created.Close()
-		}()
-		f.created.Wait()
-		return f.value == 6
-
-	}, &quick.Config{
-		MaxCount: 100,
-	})
-
-	if err != nil {
-		t.Error("expecting a value we had to wait for, but did not get it")
+	type foo struct {
+		value   int
+		created *Notifier
 	}
 
+	f := foo{
+		created: NewNotifier(),
+		value:   3,
+	}
+	f.value = 3
+	go func() {
+		time.Sleep(time.Duration(100) * time.Millisecond)
+		f.value = 5
+		f.created.Close()
+	}()
+	f.created.Wait()
+	if f.value != 5 {
+		t.Errorf("expecting a value of 5 but got %v", f.value)
+
+	}
+	f.created.Reset()
+	go func() {
+		time.Sleep(time.Duration(100) * time.Millisecond)
+		f.value = 6
+		f.created.Close()
+	}()
+	f.created.Wait()
+	if f.value != 6 {
+		t.Errorf("expecting a value of 6 but got %v", f.value)
+	}
 }
