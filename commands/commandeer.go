@@ -108,6 +108,7 @@ type commandeer struct {
 }
 
 func newCommandeerHugoState() *commandeerHugoState {
+	fmt.Printf("LOADCONFIG TEST: calling newcommandeerHugoState at %v\n", time.Now())
 	return &commandeerHugoState{
 		created: lazy.NewNotifier(),
 	}
@@ -413,6 +414,7 @@ func (c *commandeer) loadConfig() error {
 
 		err = c.initFs(fs)
 		if err != nil {
+			fmt.Printf("LOADCONFIG TEST: CALLING CLOSE AFTER initFs at %v\n", time.Now())
 			c.created.Close()
 			return
 		}
@@ -429,6 +431,7 @@ func (c *commandeer) loadConfig() error {
 		if c.buildLock == nil && h != nil {
 			c.buildLock = h.LockBuild
 		}
+		fmt.Printf("LOADCONFIG TEST: CALLING CLOSE at the end of the c.fsCreate.Do callback at %v\n", time.Now())
 		c.created.Close()
 	})
 

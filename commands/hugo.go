@@ -773,6 +773,8 @@ func (c *commandeer) partialReRender(urls ...string) error {
 }
 
 func (c *commandeer) fullRebuild(changeType string) {
+	fmt.Printf("LOADCONFIG TEST: CALLING RESET IN FULLREBUILD AT %v\n", time.Now())
+	c.created.Reset()
 	if changeType == configChangeGoMod {
 		// go.mod may be changed during the build itself, and
 		// we really want to prevent superfluous builds.
@@ -798,8 +800,6 @@ func (c *commandeer) fullRebuild(changeType string) {
 
 		defer c.timeTrack(time.Now(), "Rebuilt")
 
-		fmt.Printf("LOADCONFIG TEST: CALLING RESET IN FULLREBUILD AT %v\n", time.Now())
-		c.created.Reset()
 		err := c.loadConfig()
 		if err != nil {
 			// Set the processing on pause until the state is recovered.
