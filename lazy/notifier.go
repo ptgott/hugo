@@ -14,11 +14,9 @@
 package lazy
 
 import (
-	"fmt"
 	"runtime/debug"
 	"strings"
 	"sync"
-	"time"
 )
 
 // Notifier as a synchronization tool that is queried for just-in-time access
@@ -72,7 +70,6 @@ func (n *Notifier) Wait() {
 	<-ch
 	s := string(debug.Stack())
 	if strings.Contains(s, "newWatcher") {
-		fmt.Printf("LOADCONFIG TEST: RECEIVED FROM THE NOTIFIER CHANNEL in newWatcher at %v \n", time.Now())
 	}
 	return
 }

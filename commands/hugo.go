@@ -773,7 +773,6 @@ func (c *commandeer) partialReRender(urls ...string) error {
 }
 
 func (c *commandeer) fullRebuild(changeType string) {
-	fmt.Printf("LOADCONFIG TEST: CALLING RESET IN FULLREBUILD AT %v\n", time.Now())
 	c.created.Reset()
 	if changeType == configChangeGoMod {
 		// go.mod may be changed during the build itself, and
@@ -804,14 +803,11 @@ func (c *commandeer) fullRebuild(changeType string) {
 		if err != nil {
 			// Set the processing on pause until the state is recovered.
 			c.paused = true
-
-			fmt.Printf("LOADCONFIG TEST: CALLING CLOSE IN THE ERR != NIL BLOCK AT %v\n", time.Now())
 			c.created.Close()
 			c.handleBuildErr(err, "Failed to reload config")
 
 		} else {
 			c.paused = false
-			fmt.Printf("LOADCONFIG TEST: CALLING CLOSE IN THE ELSE BLOCK AT %v\n", time.Now())
 			c.created.Close()
 		}
 
@@ -890,9 +886,7 @@ func (c *commandeer) newWatcher(pollIntervalStr string, dirList ...string) (*wat
 				// We might be reloading the configuration in a separate
 				// goroutine, so make sure the config is ready before we
 				// read from it.
-				fmt.Printf("LOADCONFIG TEST: CALLING WAIT IN NEWWATCHER at %v\n", time.Now())
 				c.created.Wait()
-				fmt.Printf("LOADCONFIG TEST: CALLING ERRCOUNT IN NEWWATCHER at %v\n", time.Now())
 				if c.showErrorInBrowser && c.errCount() > 0 {
 					// Need to reload browser to show the error
 					livereload.ForceRefresh()
@@ -973,7 +967,6 @@ func (c *commandeer) handleEvents(watcher *watcher.Batcher,
 			}
 
 			// Config file(s) changed. Need full rebuild.
-			fmt.Printf("LOADCONFIG TEST: FULL REBUILD AT %v\n", time.Now())
 			c.fullRebuild(configChangeType)
 
 			return

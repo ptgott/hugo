@@ -16,7 +16,6 @@ package commands
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -108,7 +107,6 @@ type commandeer struct {
 }
 
 func newCommandeerHugoState() *commandeerHugoState {
-	fmt.Printf("LOADCONFIG TEST: calling newcommandeerHugoState at %v\n", time.Now())
 	return &commandeerHugoState{
 		created: lazy.NewNotifier(),
 	}
@@ -261,7 +259,6 @@ func (f *fileChangeDetector) PrepareNew() {
 }
 
 func (c *commandeer) loadConfig() error {
-	fmt.Printf("LOADCONFIG TEST: CALLING LOADCONFIG at %v\n", time.Now())
 	if c.DepsCfg == nil {
 		c.DepsCfg = &deps.DepsCfg{}
 	}
@@ -363,8 +360,6 @@ func (c *commandeer) loadConfig() error {
 	if err != nil {
 		return err
 	}
-
-	fmt.Printf("LOADCONFIG TEST: ASSIGNING LOGGER at %v\n", time.Now())
 	cfg.Logger = logger
 	c.logger = logger
 	c.serverConfig, err = hconfig.DecodeServer(cfg.Cfg)
@@ -414,7 +409,6 @@ func (c *commandeer) loadConfig() error {
 
 		err = c.initFs(fs)
 		if err != nil {
-			fmt.Printf("LOADCONFIG TEST: CALLING CLOSE AFTER initFs at %v\n", time.Now())
 			c.created.Close()
 			return
 		}
@@ -431,7 +425,6 @@ func (c *commandeer) loadConfig() error {
 		if c.buildLock == nil && h != nil {
 			c.buildLock = h.LockBuild
 		}
-		fmt.Printf("LOADCONFIG TEST: CALLING CLOSE at the end of the c.fsCreate.Do callback at %v\n", time.Now())
 		c.created.Close()
 	})
 
