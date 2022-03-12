@@ -798,17 +798,20 @@ func (c *commandeer) fullRebuild(changeType string) {
 
 		defer c.timeTrack(time.Now(), "Rebuilt")
 
+		fmt.Printf("LOADCONFIG TEST: CALLING RESET IN FULLREBUILD AT %v\n", time.Now())
 		c.created.Reset()
 		err := c.loadConfig()
 		if err != nil {
 			// Set the processing on pause until the state is recovered.
 			c.paused = true
 
+			fmt.Printf("LOADCONFIG TEST: CALLING CLOSE IN THE ERR != NIL BLOCK AT %v\n", time.Now())
 			c.created.Close()
 			c.handleBuildErr(err, "Failed to reload config")
 
 		} else {
 			c.paused = false
+			fmt.Printf("LOADCONFIG TEST: CALLING CLOSE IN THE ELSE BLOCK AT %v\n", time.Now())
 			c.created.Close()
 		}
 
