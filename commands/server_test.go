@@ -175,7 +175,7 @@ func runServerTest(c *qt.C, config string, args ...string) (result serverTestRes
 func TestInterruptAfterBadConfig(t *testing.T) {
 	// Test failure takes the form of a timeout here, so ensure there's always
 	// a timeout, and that it isn't overly long.
-	bail := time.After(time.Duration(10) * time.Second)
+	bail := time.After(time.Duration(242) * time.Second)
 
 	c := qt.New(t)
 	dir, clean, err := htesting.CreateTempDir(hugofs.Os, "hugo-cli")
@@ -255,7 +255,7 @@ theme = "notarealtheme
 func TestFixBadConfig(t *testing.T) {
 	// Test failure takes the form of a timeout here, so ensure there's always
 	// a timeout, and that it isn't overly long.
-	bail := time.After(time.Duration(10) * time.Second)
+	bail := time.After(time.Duration(242) * time.Second)
 	c := qt.New(t)
 	dir, clean, err := htesting.CreateTempDir(hugofs.Os, "hugo-cli")
 	defer clean()
